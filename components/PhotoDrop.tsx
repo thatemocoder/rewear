@@ -2,18 +2,22 @@
 
 import { useId, useState } from "react";
 
-/** File picker + drop zone for one photo. The input stays keyboard-focusable. */
+/** File picker + drop zone. The input stays keyboard-focusable. */
 export function PhotoDrop({
-  onFile,
+  onFiles,
+  multiple = false,
   disabled,
   previewUrl,
   prompt = "Drop a photo of one garment",
+  hint = "or choose a file",
   compact = false,
 }: {
-  onFile: (file: File) => void;
+  onFiles: (files: File[]) => void;
+  multiple?: boolean;
   disabled?: boolean;
   previewUrl?: string | null;
   prompt?: string;
+  hint?: string;
   compact?: boolean;
 }) {
   const id = useId();
@@ -30,22 +34,23 @@ export function PhotoDrop({
       onDrop={(e) => {
         e.preventDefault();
         setOver(false);
-        const file = e.dataTransfer.files[0];
-        if (file && !disabled) onFile(file);
+        const list = [...e.dataTransfer.files];
+        if (list.length && !disabled) onFiles(multiple ? list : list.slice(0, 1));
       }}
       className={`relative grid cursor-pointer place-items-center overflow-hidden border bg-card text-center transition-colors focus-within:outline-2 focus-within:outline-offset-3 focus-within:outline-ink ${
         over ? "border-ink" : "border-hairline hover:border-graphite"
-      } ${compact ? "min-h-28 p-4" : "aspect-[4/5] p-6"} ${disabled ? "cursor-wait" : ""}`}
+      } ${compact ? "min-h-28 p-4" : "aspect-[5/4] p-6 md:aspect-[4/5]"} ${disabled ? "cursor-wait" : ""}`}
     >
       <input
         id={id}
         type="file"
-        accept="image/jpeg,image/png,image/webp,image/heic,image/*"
+        accept="image/*"
+        multiple={multiple}
         className="sr-only"
         disabled={disabled}
         onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) onFile(file);
+          const list = [...(e.target.files ?? [])];
+          if (list.length) onFiles(list);
           e.target.value = ""; // allow re-selecting the same file
         }}
       />
@@ -55,7 +60,7 @@ export function PhotoDrop({
       ) : (
         <span>
           <span className={`block font-serif italic ${compact ? "text-lg" : "text-2xl"}`}>{prompt}</span>
-          <span className="care mt-2 block text-graphite">or choose a file</span>
+          <span className="care mt-2 block text-graphite">{hint}</span>
         </span>
       )}
       {previewUrl && !disabled && (

@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AboutDialog } from "./AboutDialog";
 
 const NAV = [
   { href: "/", label: "Plan an outfit" },
-  { href: "/add", label: "Add item" },
+  { href: "/add", label: "Add items" },
   { href: "/buy", label: "Before you buy" },
 ];
 
@@ -38,6 +39,7 @@ export function SiteHeader() {
               </Link>
             );
           })}
+          <AboutDialog />
         </nav>
       </div>
     </header>

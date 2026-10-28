@@ -1,6 +1,7 @@
 // Every AI call in this browser session, for the test log. Kept in memory and mirrored
 // to sessionStorage (cleared when the tab closes). Never sent anywhere. No images.
 import { useSyncExternalStore } from "react";
+import { downloadFile, stamp } from "./download";
 import type { Feature } from "./schemas";
 
 export interface LogEntry {
@@ -73,11 +74,5 @@ export function toCsv(list: LogEntry[]): string {
 
 export function downloadCsv(list: LogEntry[]) {
   // Leading BOM so Excel opens the UTF-8 CSV correctly.
-  const blob = new Blob([String.fromCharCode(0xfeff) + toCsv(list)], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `rewear-session-log-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-")}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+  downloadFile(`rewear-session-log-${stamp()}.csv`, String.fromCharCode(0xfeff) + toCsv(list), "text/csv;charset=utf-8");
 }

@@ -3,7 +3,8 @@
 // mode, blocked storage) they live in memory for the session and the app still works.
 import { useSyncExternalStore } from "react";
 import seedJson from "@/data/catalogue.json";
-import { TYPE_PREFIX, type CatalogueItem, type ItemTags, type ItemType } from "./schemas";
+import { downloadFile } from "./download";
+import { TYPE_PREFIX,type CatalogueItem, type ItemTags, type ItemType } from "./schemas";
 import { sanitizeCatalogue } from "./validate";
 
 const KEY = "rewear.added.v1";
@@ -23,6 +24,9 @@ function init() {
   } catch {
     storageOk = false;
   }
+  // Once exported items become the seed, the seed copy wins over the browser copy.
+  const seedIds = new Set(SEED.map((i) => i.item_id));
+  added = added.filter((i) => !seedIds.has(i.item_id));
   combined = [...SEED, ...added];
 }
 
@@ -76,6 +80,19 @@ export function addItem(tags: ItemTags): CatalogueItem {
   const item: CatalogueItem = { item_id: nextItemId(tags.type), ...tags };
   commit([...added!, item]);
   return item;
+}
+
+/** Downloads the full catalogue (seed + additions) in the exact data/catalogue.json format. */
+export function exportCatalogueJson() {
+  const items = getSnapshot().map(({ item_id, type, colour, formality, warmth, notes }) => ({
+    item_id,
+    type,
+    colour,
+    formality,
+    warmth,
+    notes,
+  }));
+  downloadFile("catalogue.json", JSON.stringify(items, null, 2) + "\n", "application/json");
 }
 
 /** "Reset to my catalogue": drop everything this viewer added. */

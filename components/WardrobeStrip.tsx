@@ -1,17 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { addedCount, isStorageAvailable, resetCatalogue } from "@/lib/catalogue";
+import { addedCount, exportCatalogueJson, isStorageAvailable, resetCatalogue } from "@/lib/catalogue";
 import { ITEM_TYPES, type CatalogueItem } from "@/lib/schemas";
 import { SwingTag } from "./SwingTag";
 
-/** The viewer's wardrobe as a row of swing tags. Items used in results get an ink edge. */
+/** The viewer's wardrobe as a row of swing tags. Items referenced by results get an ink edge and a note. */
 export function WardrobeStrip({
   catalogue,
-  picked = new Map(),
+  marks = new Map(),
 }: {
   catalogue: CatalogueItem[];
-  picked?: Map<string, number[]>; // item_id → look numbers it appears in
+  marks?: Map<string, string>; // item_id → short note, e.g. "In look 01"
 }) {
   // Read client-only state after mount so server and client markup match.
   const [mounted, setMounted] = useState(false);
@@ -34,37 +34,42 @@ export function WardrobeStrip({
             {catalogue.length} items{added ? ` · ${added} added by you` : ""}
           </span>
         </div>
-        {added > 0 && (
-          <button
-            type="button"
-            className="btn-quiet text-sm"
-            onClick={() => {
-              if (window.confirm(`Remove the ${added} item${added === 1 ? "" : "s"} you added and go back to the original catalogue?`))
-                resetCatalogue();
-            }}
-          >
-            Reset to my catalogue
+        <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm">
+          <button type="button" className="btn-quiet" onClick={exportCatalogueJson}>
+            Export catalogue (JSON)
           </button>
-        )}
+          {added > 0 && (
+            <button
+              type="button"
+              className="btn-quiet"
+              onClick={() => {
+                if (
+                  window.confirm(
+                    `Remove the ${added} item${added === 1 ? "" : "s"} you added and go back to the original catalogue? Export first if you want to keep them.`,
+                  )
+                )
+                  resetCatalogue();
+              }}
+            >
+              Reset to my catalogue
+            </button>
+          )}
+        </div>
       </div>
       {!storageOk && (
         <p className="mt-2 text-sm text-graphite">
-          This browser isn&apos;t saving data, so items you add will disappear when you leave.
+          This browser isn&apos;t saving data, so items you add will disappear when you leave. Export to keep them.
         </p>
       )}
       <ul className="-mx-4 mt-4 flex gap-3 overflow-x-auto px-4 pt-1 pb-4 md:mx-0 md:flex-wrap md:overflow-visible md:px-0">
         {sorted.map((item) => {
-          const looks = picked.get(item.item_id);
+          const mark = marks.get(item.item_id);
           return (
             <li key={item.item_id} className="w-40 shrink-0">
               <SwingTag
                 item={item}
-                variant={looks ? "picked" : "default"}
-                note={
-                  looks ? (
-                    <span className="care mt-2 text-ink">In look {looks.map((n) => String(n).padStart(2, "0")).join(", ")}</span>
-                  ) : undefined
-                }
+                variant={mark ? "picked" : "default"}
+                note={mark ? <span className="care mt-2 text-ink">{mark}</span> : undefined}
               />
             </li>
           );

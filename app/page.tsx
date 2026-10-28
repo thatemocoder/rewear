@@ -26,16 +26,20 @@ export default function PlanPage() {
 
   const byId = useMemo(() => new Map(catalogue.map((i) => [i.item_id, i])), [catalogue]);
 
-  const picked = useMemo(() => {
-    const m = new Map<string, number[]>();
-    if (state.status !== "done") return m;
-    state.result.outfits.forEach((o, i) =>
-      o.items.forEach(({ item_id }) => {
-        const looks = m.get(item_id) ?? [];
-        if (!looks.includes(i + 1)) m.set(item_id, [...looks, i + 1]);
-      }),
+  // item_id → "In look 01, 02" for the wardrobe strip
+  const marks = useMemo(() => {
+    const looks = new Map<string, number[]>();
+    if (state.status === "done") {
+      state.result.outfits.forEach((o, i) =>
+        o.items.forEach(({ item_id }) => {
+          const l = looks.get(item_id) ?? [];
+          if (!l.includes(i + 1)) looks.set(item_id, [...l, i + 1]);
+        }),
+      );
+    }
+    return new Map(
+      [...looks].map(([id, l]) => [id, `In look ${l.map((n) => String(n).padStart(2, "0")).join(", ")}`]),
     );
-    return m;
   }, [state]);
 
   async function submit(e: FormEvent) {
@@ -183,7 +187,7 @@ export default function PlanPage() {
         </section>
       </div>
 
-      <WardrobeStrip catalogue={catalogue} picked={picked} />
+      <WardrobeStrip catalogue={catalogue} marks={marks} />
     </div>
   );
 }
