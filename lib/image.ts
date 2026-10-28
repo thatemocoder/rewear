@@ -8,7 +8,12 @@ export async function prepareImage(file: File): Promise<ImageInput & { previewUr
   if (!file.type.startsWith("image/")) throw new Error("That file isn't an image.");
 
   // imageOrientation applies the EXIF rotation to the pixels before the metadata is dropped.
-  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+  } catch {
+    throw new Error("This browser can’t read that image format. Try a JPEG or PNG.");
+  }
   const ratio = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height));
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(bitmap.width * ratio);

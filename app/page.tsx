@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useMemo, useRef, useState, type FormEvent } from "react";
 import { AiLabel, YourCall } from "@/components/AiLabel";
 import { OutfitFlatLay } from "@/components/OutfitFlatLay";
 import { WardrobeStrip } from "@/components/WardrobeStrip";
 import { callAI } from "@/lib/api";
 import { useCatalogue } from "@/lib/catalogue";
+import { revealOnSmallScreens } from "@/lib/reveal";
 import { DRESS_CODES, type PlanResult } from "@/lib/schemas";
 
 type State =
@@ -21,6 +22,7 @@ export default function PlanPage() {
   const [dressCode, setDressCode] = useState("");
   const [notes, setNotes] = useState("");
   const [state, setState] = useState<State>({ status: "idle" });
+  const resultsRef = useRef<HTMLElement>(null);
 
   const byId = useMemo(() => new Map(catalogue.map((i) => [i.item_id, i])), [catalogue]);
 
@@ -54,6 +56,7 @@ export default function PlanPage() {
       catalogue_ids: catalogue.map((i) => i.item_id).join(" "),
     });
     setState(res.ok ? { status: "done", result: res.data } : { status: "error", message: res.message });
+    revealOnSmallScreens(resultsRef.current);
   }
 
   return (
@@ -140,7 +143,7 @@ export default function PlanPage() {
         </section>
 
         {/* ── Results ── */}
-        <section aria-labelledby="results-h" aria-live="polite" aria-busy={state.status === "loading"}>
+        <section ref={resultsRef} className="scroll-mt-6" aria-labelledby="results-h" aria-live="polite" aria-busy={state.status === "loading"}>
           <h2 id="results-h" className="sr-only">
             Suggestions
           </h2>

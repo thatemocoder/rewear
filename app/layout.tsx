@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, IBM_Plex_Mono, Instrument_Sans } from "next/font/google";
+import { Fraunces, Instrument_Sans, JetBrains_Mono } from "next/font/google";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import "./globals.css";
@@ -11,7 +11,7 @@ const fraunces = Fraunces({
   variable: "--font-fraunces",
 });
 const instrument = Instrument_Sans({ subsets: ["latin"], variable: "--font-instrument" });
-const plexMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-plex-mono" });
+const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-mono-face" });
 
 export const metadata: Metadata = {
   title: "Rewear — plan outfits from what you own",
@@ -22,7 +22,7 @@ export const viewport: Viewport = { themeColor: "#f4f0e8" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-AU" className={`${fraunces.variable} ${instrument.variable} ${plexMono.variable}`}>
+    <html lang="en-AU" className={`${fraunces.variable} ${instrument.variable} ${mono.variable}`}>
       <body className="flex min-h-dvh flex-col">
         <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:bg-ink focus:px-3 focus:py-2 focus:text-paper">
           Skip to content

@@ -12,7 +12,7 @@
 
   --font-serif: var(--font-fraunces), Georgia, serif;
   --font-sans: var(--font-instrument), system-ui, sans-serif;
-  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+  --font-mono: var(--font-mono-face), ui-monospace, monospace;
 
   /* type scale: 12 / 14 / 16 / 20 / 28 / 44 */
   --text-micro: 0.6875rem; /* 11px care-label caps */
