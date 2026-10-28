@@ -3,8 +3,10 @@ import { GoogleGenAI, ThinkingLevel, type Part } from "@google/genai";
 import type { ImageInput } from "./schemas";
 
 /** Change the model here. Must support image input. */
-// gemini-3.8-flash is newer but was returning persistent 503 "high demand" on the free tier (2026-10-28).
-export const GEMINI_MODEL = "gemini-3.6-flash";
+// History (2026-10-28): gemini-3.8-flash gave persistent 503 "high demand" on the free tier;
+// gemini-3.6-flash worked but its free tier allows only 20 requests/day (5/min).
+// gemini-3.5-flash-lite: free, image input, ~500 requests/day (10/min).
+export const GEMINI_MODEL = "gemini-3.5-flash-lite";
 
 /** Extra attempts after a transient 500/503 from Gemini (1s, then 2s backoff). */
 const RETRIES = 2;

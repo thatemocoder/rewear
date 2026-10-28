@@ -43,7 +43,7 @@ Browser (components/, app/*/page.tsx)
 ```
 
 - **Stack:** Next.js (App Router) + TypeScript, Tailwind v4 (design tokens in `app/globals.css`), `@google/genai`. No database, no accounts.
-- **Model:** `gemini-3.6-flash`, set in one constant in `lib/gemini.ts`. `gemini-3.8-flash` returned constant 503 "high demand" errors on the free tier during the build. Transient 500/503 errors are retried twice.
+- **Model:** `gemini-3.5-flash-lite`, set in one constant in `lib/gemini.ts`. During the build, `gemini-3.8-flash` returned constant 503 "high demand" errors on the free tier, and `gemini-3.6-flash` allowed only 20 requests a day; Flash-Lite allows about 500. Transient 500/503 errors are retried twice. When Gemini's per-minute limit is hit, the photo queue waits and retries; when the daily quota is used up, the app says when it resets.
 - **UI and logic are separate.** Components only render. Everything else is in `lib/` and the API routes, so the front end can be redesigned without touching AI logic.
 - **Storage:** the seed catalogue ships as `data/catalogue.json`. Items you add live in your browser's `localStorage`. **Export catalogue (JSON)** downloads the full wardrobe in the seed format, and **Reset to my catalogue** removes your additions.
 - **Abuse limit:** a best-effort in-memory daily cap per IP and globally (`RATE_LIMIT_PER_IP`, default 80; `RATE_LIMIT_GLOBAL`, default 200). It's per server instance; cost safety comes from using a free-tier key with no billing attached.
