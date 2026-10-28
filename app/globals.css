@@ -1,0 +1,180 @@
+@import "tailwindcss";
+
+/* ── Design tokens: the single source for colour, type and motion ── */
+@theme inline {
+  --color-paper: #f4f0e8; /* page */
+  --color-card: #fbf8f2; /* swing-tag stock */
+  --color-ink: #1c1a17; /* text, rules, buttons — 15.3:1 on paper */
+  --color-graphite: #5f5950; /* secondary text — 6.1:1 on paper */
+  --color-hairline: #d3cbbe; /* 1px rules, tag edges (decorative) */
+  --color-oxblood: #6b2525; /* AI-produced content ONLY — 9.6:1 on paper */
+  --color-oxblood-wash: #f1e4e0; /* "Your call" fill */
+
+  --font-serif: var(--font-fraunces), Georgia, serif;
+  --font-sans: var(--font-instrument), system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+
+  /* type scale: 12 / 14 / 16 / 20 / 28 / 44 */
+  --text-micro: 0.6875rem; /* 11px care-label caps */
+  --text-display: 2.75rem;
+  --text-display--line-height: 1.05;
+
+  --ease-quiet: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  body {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 3px;
+  }
+  ::selection {
+    background: var(--color-oxblood-wash);
+  }
+}
+
+@layer components {
+  /* Care-label micro text: mono, caps, tracked out */
+  .care {
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    line-height: 1.4;
+  }
+
+  /* Form fields: underline only, like writing on a label */
+  .field {
+    width: 100%;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--color-ink);
+    padding: 0.4rem 0;
+    font-size: 1rem;
+    border-radius: 0;
+  }
+  .field:focus-visible {
+    outline-offset: 2px;
+  }
+  select.field {
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--color-ink) 50%),
+      linear-gradient(135deg, var(--color-ink) 50%, transparent 50%);
+    background-position: calc(100% - 10px) 55%, calc(100% - 5px) 55%;
+    background-size: 5px 5px;
+    background-repeat: no-repeat;
+    padding-right: 1.5rem;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--color-ink);
+    color: var(--color-paper);
+    padding: 0.75rem 1.25rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    transition: background-color 150ms;
+  }
+  .btn:hover {
+    background: #000;
+  }
+  .btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+  .btn-quiet {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+    color: var(--color-ink);
+  }
+  .btn-quiet:hover {
+    text-decoration-thickness: 2px;
+  }
+
+  /* ── Swing tag: clipped top corners via a two-layer clip-path (outer = edge colour) ── */
+  .swing {
+    --cut: 14px;
+    --edge: var(--color-hairline);
+    clip-path: polygon(var(--cut) 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% 100%, 0 100%, 0 var(--cut));
+    background: var(--edge);
+    padding: 1px;
+  }
+  .swing > .swing-body {
+    clip-path: inherit;
+    background: var(--color-card);
+    height: 100%;
+    position: relative;
+  }
+  .swing-hole {
+    position: absolute;
+    top: 9px;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    margin-left: -5px;
+    border-radius: 9999px;
+    background: var(--color-paper);
+    box-shadow: inset 0 0 0 1px var(--edge);
+  }
+  .swing[data-variant="picked"] {
+    --edge: var(--color-ink);
+    padding: 1.5px;
+  }
+  .swing[data-variant="draft"] {
+    --edge: var(--color-oxblood);
+  }
+  .swing[data-variant="unknown"] {
+    --edge: var(--color-graphite);
+  }
+  .swing[data-variant="unknown"] > .swing-body {
+    background: repeating-linear-gradient(-45deg, var(--color-card) 0 6px, var(--color-paper) 6px 7px);
+  }
+  .swing[data-variant="muted"] {
+    opacity: 0.5;
+  }
+}
+
+/* ── Motion: subtle only ── */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.rise {
+  animation: rise 250ms var(--ease-quiet) both;
+}
+.breathe {
+  animation: breathe 2.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rise,
+  .breathe {
+    animation: none;
+  }
+}

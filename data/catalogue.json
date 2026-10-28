@@ -1,0 +1,5 @@
+[
+  { "item_id": "T01", "type": "top", "colour": "navy", "formality": 3, "warmth": 2, "notes": "knit polo" },
+  { "item_id": "B01", "type": "bottom", "colour": "stone", "formality": 3, "warmth": 2, "notes": "straight-leg chinos" },
+  { "item_id": "S01", "type": "shoes", "colour": "white", "formality": 2, "warmth": 2, "notes": "leather trainers" }
+]

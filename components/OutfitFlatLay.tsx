@@ -1,0 +1,35 @@
+import type { CatalogueItem, Outfit } from "@/lib/schemas";
+import { AiLabel } from "./AiLabel";
+import { SwingTag } from "./SwingTag";
+
+// Small alternating tilts make the grid read as a flat-lay rather than a table.
+const TILTS = [-1.2, 0.8, -0.5, 1.1, -0.9, 0.6];
+
+export function OutfitFlatLay({
+  outfit,
+  index,
+  catalogue,
+}: {
+  outfit: Outfit;
+  index: number;
+  catalogue: Map<string, CatalogueItem>;
+}) {
+  return (
+    <article className="rise" style={{ animationDelay: `${index * 60}ms` }} aria-labelledby={`look-${index}`}>
+      <header className="flex items-baseline justify-between border-t border-ink pt-2">
+        <AiLabel />
+        <h3 id={`look-${index}`} className="care text-graphite">
+          Look {String(index + 1).padStart(2, "0")}
+        </h3>
+      </header>
+      <ul className="mt-5 grid grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-3 lg:grid-cols-4">
+        {outfit.items.map((ref, i) => (
+          <li key={`${ref.item_id}-${i}`}>
+            <SwingTag item={catalogue.get(ref.item_id)} fallback={ref} tilt={TILTS[i % TILTS.length]} />
+          </li>
+        ))}
+      </ul>
+      {outfit.reason && <p className="mt-5 max-w-prose font-serif text-xl leading-snug italic">{outfit.reason}</p>}
+    </article>
+  );
+}
