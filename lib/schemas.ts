@@ -84,8 +84,24 @@ export interface BuyResult {
 }
 
 // ── API envelope ──────────────────────────────────────────────
-export type ApiErrorCode = "bad_request" | "rate_limited" | "ai_error" | "parse_failed" | "not_configured";
+export type ApiErrorCode =
+  | "bad_request"
+  | "rate_limited" // Rewear's own daily cap
+  | "ai_busy" // Gemini per-minute quota; retryAfterSec says how long to wait
+  | "quota_daily" // Gemini per-day quota; resetAt says when it resets
+  | "ai_error"
+  | "parse_failed"
+  | "not_configured";
 
 export type ApiResponse<T> =
   | { ok: true; data: T; raw: string; promptVersion: string; model: string }
-  | { ok: false; error: ApiErrorCode; message: string; raw?: string; promptVersion?: string; model?: string };
+  | {
+      ok: false;
+      error: ApiErrorCode;
+      message: string;
+      raw?: string;
+      promptVersion?: string;
+      model?: string;
+      retryAfterSec?: number;
+      resetAt?: string;
+    };

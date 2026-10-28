@@ -32,7 +32,7 @@ export default function AddPage() {
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   const active = entries.find((e) => e.key === selectedKey && isReviewable(e)) ?? entries.find(isReviewable);
-  const working = entries.find((e) => e.status === "tagging");
+  const working = entries.find((e) => e.status === "tagging" || e.status === "waiting");
   const waiting = entries.filter((e) => e.status === "queued").length;
   const open = entries.filter(isOpen);
   const savedCount = entries.filter((e) => e.status === "saved").length;
@@ -133,7 +133,9 @@ export default function AddPage() {
           )}
 
           {!active && (working || waiting > 0) && (
-            <p className="breathe border-t border-hairline pt-4 font-serif text-xl italic">Reading the label…</p>
+            <p className="breathe border-t border-hairline pt-4 font-serif text-xl italic">
+              {working?.status === "waiting" ? "Pausing for the AI's per-minute limit…" : "Reading the label…"}
+            </p>
           )}
 
           {active && (
@@ -141,7 +143,7 @@ export default function AddPage() {
               <p className="care mb-4 text-graphite">
                 {[
                   open.length > 1 && `${open.length - 1} more in the queue`,
-                  working && working.key !== active.key && "reading the next photo",
+                  working && working.key !== active.key && (working.status === "waiting" ? "pausing for the AI's per-minute limit" : "reading the next photo"),
                 ]
                   .filter(Boolean)
                   .join(" · ") || "Last one"}

@@ -11,8 +11,18 @@ function reply<T>(body: ApiResponse<T>, status: number): Response {
   return Response.json(body, { status });
 }
 
-function fail(error: ApiErrorCode, message: string, status: number, extra?: { raw?: string; promptVersion?: string; model?: string }) {
+type FailExtra = { raw?: string; promptVersion?: string; model?: string; retryAfterSec?: number; resetAt?: string };
+
+function fail(error: ApiErrorCode, message: string, status: number, extra?: FailExtra) {
   return reply<never>({ ok: false, error, message, ...extra }, status);
+}
+
+/** Gemini's daily quotas reset at midnight US Pacific time. */
+function nextPacificMidnight(now = new Date()): Date {
+  const la = new Date(now.toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
+  const offset = now.getTime() - la.getTime();
+  la.setHours(24, 0, 0, 0);
+  return new Date(la.getTime() + offset);
 }
 
 export async function runFeature<T>(
@@ -51,11 +61,23 @@ export async function runFeature<T>(
     const status = (err as { status?: number }).status;
     console.error(`[${feature}] Gemini error`, status, (err as Error).message);
     if (status === 429) {
+      // Gemini free tier has both a per-minute and a per-day request quota; tell them apart.
+      const msg = (err as Error).message ?? "";
+      const meta = { promptVersion: prompt.version, model: GEMINI_MODEL };
+      if (/per day/i.test(msg)) {
+        return fail(
+          "quota_daily",
+          "Today's free AI quota for Rewear is used up. It resets at midnight Pacific time.",
+          429,
+          { ...meta, resetAt: nextPacificMidnight().toISOString() },
+        );
+      }
+      const wait = Math.ceil(Number(msg.match(/retry in ([\d.]+)s/i)?.[1] ?? 30));
       return fail(
-        "rate_limited",
-        "The AI service is busy or its free quota is used up for now. Please try again a little later.",
+        "ai_busy",
+        `The AI's per-minute limit was reached. Please wait about ${wait} seconds and try again.`,
         429,
-        { promptVersion: prompt.version, model: GEMINI_MODEL },
+        { ...meta, retryAfterSec: wait },
       );
     }
     if (status === 503) {

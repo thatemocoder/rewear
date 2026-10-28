@@ -5,6 +5,7 @@ import { clearFinished, isOpen, isReviewable, type QueueEntry } from "@/lib/tagQ
 const STATUS: Record<QueueEntry["status"], string> = {
   queued: "Waiting",
   tagging: "Reading…",
+  waiting: "Waiting for AI limit",
   draft: "Check tags",
   rejected: "No tags",
   error: "Didn’t work",
@@ -53,7 +54,7 @@ export function TagQueueList({
                 <span
                   className={`care block ${
                     e.status === "draft" || e.status === "rejected" ? "text-oxblood" : "text-graphite"
-                  } ${e.status === "tagging" ? "breathe" : ""}`}
+                  } ${e.status === "tagging" || e.status === "waiting" ? "breathe" : ""}`}
                 >
                   {e.status === "saved" ? `Saved as ${e.savedId}` : STATUS[e.status]}
                 </span>

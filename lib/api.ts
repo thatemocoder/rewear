@@ -23,6 +23,12 @@ export async function callAI<F extends Feature>(
     res = { ok: false, error: "ai_error", message: "Couldn't reach Rewear's server. Check your connection and try again." };
   }
 
+  // Show the daily-quota reset time in the viewer's own time zone.
+  if (!res.ok && res.error === "quota_daily" && res.resetAt) {
+    const at = new Date(res.resetAt).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" });
+    res = { ...res, message: `${res.message.replace(/\.$/, "")} (${at} your time).` };
+  }
+
   logCall({
     feature,
     promptVersion: res.promptVersion ?? PROMPT_CONFIG[feature],

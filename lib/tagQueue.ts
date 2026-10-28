@@ -10,7 +10,10 @@ import type { CatalogueItem, ImageInput, ItemTags } from "./schemas";
 
 export const MAX_QUEUE = 12;
 
-export type QueueStatus = "queued" | "tagging" | "draft" | "rejected" | "error" | "saved" | "discarded";
+/** Automatic waits per photo when Gemini's per-minute limit is hit. */
+const MAX_WAITS = 3;
+
+export type QueueStatus = "queued" | "tagging" | "waiting" | "draft" | "rejected" | "error" | "saved" | "discarded";
 
 export interface QueueEntry {
   key: string;
@@ -31,6 +34,7 @@ export const isOpen = (e: QueueEntry) => e.status !== "saved" && e.status !== "d
 let entries: QueueEntry[] = [];
 const files = new Map<string, File>(); // kept outside entries; only for (re)processing
 const images = new Map<string, ImageInput>(); // re-encoded copies, reused on retry
+const waits = new Map<string, number>(); // per-photo count of automatic waits
 const listeners = new Set<() => void>();
 let running = false;
 
@@ -105,6 +109,28 @@ async function processEntry(key: string) {
   }
 
   const res = await callAI("tag", { image }, { photo: "attached (not stored or logged)" });
+
+  // Gemini's per-minute limit: wait as long as it asks, then retry this photo (a few times at most).
+  const tries = (waits.get(key) ?? 0) + 1;
+  if (!res.ok && res.error === "ai_busy" && tries <= MAX_WAITS) {
+    waits.set(key, tries);
+    const sec = (res.retryAfterSec ?? 30) + 2;
+    update(key, { status: "waiting", message: `Waiting ${sec}s for the AI's per-minute limit` });
+    await new Promise((r) => setTimeout(r, sec * 1000));
+    if (entries.find((e) => e.key === key)?.status === "waiting") update(key, { status: "queued" });
+    return;
+  }
+  waits.delete(key);
+
+  // Daily quota used up: stop the queue; everything still waiting becomes retryable later.
+  if (!res.ok && res.error === "quota_daily") {
+    entries = entries.map((e) =>
+      e.key === key || e.status === "queued" ? { ...e, status: "error" as const, message: res.message } : e,
+    );
+    emit();
+    return;
+  }
+
   if (!res.ok) update(key, { status: "error", message: res.message });
   else if (!res.data.ok) update(key, { status: "rejected", reason: res.data.reason });
   else update(key, { status: "draft", draft: res.data.tags, value: res.data.tags });
