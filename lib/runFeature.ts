@@ -11,7 +11,7 @@ function reply<T>(body: ApiResponse<T>, status: number): Response {
   return Response.json(body, { status });
 }
 
-function fail(error: ApiErrorCode, message: string, status: number, extra?: { raw?: string; promptVersion?: string }) {
+function fail(error: ApiErrorCode, message: string, status: number, extra?: { raw?: string; promptVersion?: string; model?: string }) {
   return reply<never>({ ok: false, error, message, ...extra }, status);
 }
 
@@ -55,10 +55,16 @@ export async function runFeature<T>(
         "rate_limited",
         "The AI service is busy or its free quota is used up for now. Please try again a little later.",
         429,
-        { promptVersion: prompt.version },
+        { promptVersion: prompt.version, model: GEMINI_MODEL },
       );
     }
-    return fail("ai_error", "The AI service didn't respond. Please try again.", 502, { promptVersion: prompt.version });
+    if (status === 503) {
+      return fail("ai_error", "Gemini is overloaded right now (this happens at busy times). Please try again in a minute.", 503, {
+        promptVersion: prompt.version,
+        model: GEMINI_MODEL,
+      });
+    }
+    return fail("ai_error", "The AI service didn't respond. Please try again.", 502, { promptVersion: prompt.version, model: GEMINI_MODEL });
   }
 
   const data = parse(raw);
@@ -66,6 +72,7 @@ export async function runFeature<T>(
     return fail("parse_failed", "Couldn't read the AI's response. The raw output is in the session log.", 502, {
       raw,
       promptVersion: prompt.version,
+      model: GEMINI_MODEL,
     });
   }
 

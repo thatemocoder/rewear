@@ -8,6 +8,7 @@ export interface LogEntry {
   timestamp: string; // ISO
   feature: Feature;
   promptVersion: string;
+  model: string; // empty if the request never reached the AI
   status: string; // "ok" or an error code
   inputs: Record<string, string | number>;
   output: string; // the AI's raw output, or the error message when there is none
@@ -63,15 +64,16 @@ export function clearLog() {
 const csvCell = (v: string) => `"${v.replace(/"/g, '""')}"`;
 
 export function toCsv(list: LogEntry[]): string {
-  const header = ["timestamp", "feature", "prompt_version", "status", "inputs", "ai_raw_output"];
+  const header = ["timestamp", "feature", "prompt_version", "model", "status", "inputs", "ai_raw_output"];
   const rows = list.map((e) =>
-    [e.timestamp, e.feature, e.promptVersion, e.status, JSON.stringify(e.inputs), e.output].map((v) => csvCell(String(v))),
+    [e.timestamp, e.feature, e.promptVersion, e.model, e.status, JSON.stringify(e.inputs), e.output].map((v) => csvCell(String(v))),
   );
   return [header.join(","), ...rows.map((r) => r.join(","))].join("\r\n");
 }
 
 export function downloadCsv(list: LogEntry[]) {
-  const blob = new Blob(["﻿" + toCsv(list)], { type: "text/csv;charset=utf-8" });
+  // Leading BOM so Excel opens the UTF-8 CSV correctly.
+  const blob = new Blob([String.fromCharCode(0xfeff) + toCsv(list)], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;

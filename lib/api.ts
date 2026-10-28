@@ -26,6 +26,7 @@ export async function callAI<F extends Feature>(
   logCall({
     feature,
     promptVersion: res.promptVersion ?? PROMPT_CONFIG[feature],
+    model: res.model ?? "",
     status: res.ok ? "ok" : res.error,
     inputs: logInputs,
     output: res.raw ?? (res.ok ? "" : res.message),

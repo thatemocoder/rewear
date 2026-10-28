@@ -88,4 +88,4 @@ export type ApiErrorCode = "bad_request" | "rate_limited" | "ai_error" | "parse_
 
 export type ApiResponse<T> =
   | { ok: true; data: T; raw: string; promptVersion: string; model: string }
-  | { ok: false; error: ApiErrorCode; message: string; raw?: string; promptVersion?: string };
+  | { ok: false; error: ApiErrorCode; message: string; raw?: string; promptVersion?: string; model?: string };
