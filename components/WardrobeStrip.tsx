@@ -46,7 +46,7 @@ export function WardrobeStrip({
               onClick={() => {
                 if (
                   window.confirm(
-                    `Undo your ${changes} change${changes === 1 ? "" : "s"} (added, edited or removed items) and go back to the original catalogue? Export first if you want to keep them.`,
+                    `Undo your ${changes} change${changes === 1 ? "" : "s"} (added, edited or removed items) and remove kept photos, going back to the original catalogue? Export first if you want to keep your items.`,
                   )
                 )
                   resetCatalogue();

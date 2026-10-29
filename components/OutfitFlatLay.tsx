@@ -1,6 +1,7 @@
 import type { CatalogueItem, Outfit } from "@/lib/schemas";
 import { AiLabel } from "./AiLabel";
-import { SwingTag } from "./SwingTag";
+import { usePhotos } from "@/lib/photos";
+import { GarmentCard } from "./GarmentCard";
 
 // Small alternating tilts make the grid read as a flat-lay rather than a table.
 const TILTS = [-1.2, 0.8, -0.5, 1.1, -0.9, 0.6];
@@ -19,6 +20,7 @@ export function OutfitFlatLay({
   idPrefix?: string;
 }) {
   const hid = `${idPrefix}-${index}`;
+  const photos = usePhotos();
   return (
     <article className="rise" style={{ animationDelay: `${index * 60}ms` }} aria-labelledby={hid}>
       <header className="flex items-baseline justify-between border-t border-ink pt-2">
@@ -27,10 +29,15 @@ export function OutfitFlatLay({
           {label ?? `Look ${String(index + 1).padStart(2, "0")}`}
         </h3>
       </header>
-      <ul className="mt-5 grid grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-3 lg:grid-cols-4">
+      <ul className="mt-5 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4">
         {outfit.items.map((ref, i) => (
           <li key={`${ref.item_id}-${i}`}>
-            <SwingTag item={catalogue.get(ref.item_id)} fallback={ref} tilt={TILTS[i % TILTS.length]} />
+            <GarmentCard
+              item={catalogue.get(ref.item_id)}
+              fallback={ref}
+              photoUrl={photos.get(ref.item_id)}
+              tilt={TILTS[i % TILTS.length]}
+            />
           </li>
         ))}
       </ul>

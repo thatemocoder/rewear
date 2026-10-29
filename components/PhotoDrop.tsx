@@ -55,7 +55,7 @@ export function PhotoDrop({
         }}
       />
       {previewUrl ? (
-        // In-memory data URL only: never stored.
+        // In-memory data URL; kept on the device only if the person chooses to on Save.
         <img src={previewUrl} alt="Your photo" className="absolute inset-0 size-full object-contain p-3" />
       ) : (
         <span>

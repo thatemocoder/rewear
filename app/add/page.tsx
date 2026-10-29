@@ -8,6 +8,7 @@ import { TagEditor } from "@/components/TagEditor";
 import { TagQueueList } from "@/components/TagQueueList";
 import { WardrobeStrip } from "@/components/WardrobeStrip";
 import { nextItemId, useCatalogue } from "@/lib/catalogue";
+import { getKeepPhotosPref, setKeepPhotosPref } from "@/lib/photos";
 import { revealOnSmallScreens } from "@/lib/reveal";
 import type { CatalogueItem } from "@/lib/schemas";
 import {
@@ -28,6 +29,8 @@ export default function AddPage() {
   const [selectedKey, setSelectedKey] = useState<string>();
   const [lastSaved, setLastSaved] = useState<CatalogueItem | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [keepPhoto, setKeepPhoto] = useState(true);
+  useEffect(() => setKeepPhoto(getKeepPhotosPref()), []);
   const reviewRef = useRef<HTMLElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
 
@@ -67,7 +70,7 @@ export default function AddPage() {
   function save(e: FormEvent) {
     e.preventDefault();
     if (!active) return;
-    finish(() => setLastSaved(saveEntry(active.key)));
+    finish(() => setLastSaved(saveEntry(active.key, { keepPhoto })));
   }
 
   return (
@@ -90,8 +93,8 @@ export default function AddPage() {
             />
           </div>
           <p className="mt-3 text-sm text-graphite">
-            Photos aren&apos;t stored. Your browser re-encodes each image (removing location data) and sends it once to
-            draft tags. Photos are tagged one at a time.
+            Your browser re-encodes each photo (removing location data) and sends it once to draft tags. Photos are tagged
+            one at a time. Nothing is stored on a server; you can choose to keep a small copy on this device.
           </p>
           {notice && (
             <p className="mt-2 text-sm" role="status">
@@ -170,7 +173,22 @@ export default function AddPage() {
                       value={active.value}
                       onChange={(v) => editEntry(active.key, v)}
                     />
-                    <div className="mt-6 flex flex-wrap items-center gap-5">
+                    <label className="mt-5 flex items-start gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        className="mt-1 accent-[var(--color-ink)]"
+                        checked={keepPhoto}
+                        onChange={(e) => {
+                          setKeepPhoto(e.target.checked);
+                          setKeepPhotosPref(e.target.checked);
+                        }}
+                      />
+                      <span>
+                        Keep a small photo on this device for outfit views
+                        <span className="block text-xs text-graphite">Stays in this browser only; never uploaded.</span>
+                      </span>
+                    </label>
+                    <div className="mt-5 flex flex-wrap items-center gap-5">
                       <button type="submit" className="btn">
                         Save to wardrobe
                       </button>

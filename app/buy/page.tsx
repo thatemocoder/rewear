@@ -3,10 +3,11 @@
 import { useMemo, useRef, useState, type FormEvent } from "react";
 import { AiLabel } from "@/components/AiLabel";
 import { PhotoDrop } from "@/components/PhotoDrop";
-import { SwingTag } from "@/components/SwingTag";
+import { GarmentCard } from "@/components/GarmentCard";
 import { WardrobeStrip } from "@/components/WardrobeStrip";
 import { callAI } from "@/lib/api";
 import { useCatalogue } from "@/lib/catalogue";
+import { usePhotos } from "@/lib/photos";
 import { prepareImage } from "@/lib/image";
 import { revealOnSmallScreens } from "@/lib/reveal";
 import type { BuyResult, ImageInput } from "@/lib/schemas";
@@ -19,6 +20,7 @@ type State =
 
 export default function BuyPage() {
   const catalogue = useCatalogue();
+  const photos = usePhotos();
   const [considering, setConsidering] = useState("");
   // Optional photo: memory only, never stored.
   const [photo, setPhoto] = useState<(ImageInput & { previewUrl: string }) | null>(null);
@@ -139,7 +141,7 @@ export default function BuyPage() {
                 <ul className="mt-4 grid grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-3 lg:grid-cols-4">
                   {state.result.same_role.map((ref, i) => (
                     <li key={`${ref.item_id}-${i}`}>
-                      <SwingTag item={byId.get(ref.item_id)} fallback={ref} />
+                      <GarmentCard item={byId.get(ref.item_id)} fallback={ref} photoUrl={photos.get(ref.item_id)} />
                     </li>
                   ))}
                 </ul>

@@ -98,7 +98,8 @@ export function AboutDialog() {
             <Block title="Your data">
               <List
                 items={[
-                  "Photos are never stored, on a server or in your browser. Your browser re-encodes each one (removing location data) and sends it once to the AI.",
+                  "Photos are never stored on a server. Your browser re-encodes each one (removing location data) and sends it once to the AI to draft tags.",
+                  "If you choose, a small copy of an item’s photo is kept in this browser only (IndexedDB) so outfits can show the real garment. It is never uploaded. Remove photos any time in Wardrobe; items without a photo show a colour silhouette.",
                   "Items you add are kept in this browser only. There are no accounts and no database.",
                   "Your approximate area comes from your internet connection (via Vercel) and is used only to fetch a forecast; it isn’t stored. “Use my current location” asks your browser first.",
                   "Venue searches go to OpenStreetMap (Nominatim); forecast requests send coordinates to Open-Meteo. Both requests come from Rewear’s server, not your browser.",

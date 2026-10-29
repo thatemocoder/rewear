@@ -36,7 +36,7 @@ Most of us wear a small share of what we own and still feel we have "nothing to 
 ```
 Browser (components/, app/*/page.tsx)
   │  catalogue (seed JSON + this browser's additions) and form inputs
-  │  photos re-encoded on a canvas first: EXIF/GPS stripped, ≤1024px, never stored
+  │  photos re-encoded on a canvas first: EXIF/GPS stripped, ≤1024px, never stored on a server
   ▼
 /api/plan · /api/stylist · /api/tag · /api/buy · /api/trends   (AI routes)
   └─ lib/runFeature.ts: validate → daily cap → versioned prompt → Gemini → parse
@@ -51,6 +51,7 @@ Browser (components/, app/*/page.tsx)
 - **Model:** `gemini-3.5-flash-lite`, set in one constant in `lib/gemini.ts`. During the build, `gemini-3.8-flash` returned constant 503 "high demand" errors on the free tier, and `gemini-3.6-flash` allowed only 20 requests a day; Flash-Lite allows about 500. Transient 500/503 errors are retried twice. When Gemini's per-minute limit is hit, the photo queue waits and retries; when the daily quota is used up, the app says when it resets.
 - **UI and logic are separate.** Components only render. Everything else is in `lib/` and the API routes, so the front end can be redesigned without touching AI logic.
 - **Storage:** the seed catalogue ships as `data/catalogue.json`. Items you add live in your browser's `localStorage` (`rewear.added.v1`); edits and removals of shipped items are kept separately (`rewear.edits.v1`). **Export catalogue (JSON)** downloads the full wardrobe in the seed format, and **Reset to my catalogue** undoes all local changes.
+- **Outfit pictures:** outfits show each garment, using a small photo the person chose to keep **on their device only** (IndexedDB, ~480px, re-encoded, never uploaded) or a colour silhouette drawn from the item's type, notes and colour tag. This replaces the original "never store photos" rule with an opt-out, device-only copy. The catalogue export doesn't include photos.
 - **Context data (no AI, no keys):** approximate area from Vercel's IP geolocation headers (not stored); venues from [OpenStreetMap Nominatim](https://nominatim.org/) (© OpenStreetMap contributors, ≤1 request/second, searched on demand only); hourly forecasts from [Open-Meteo](https://open-meteo.com/) (CC BY 4.0). All are called from the server, so they never see the viewer's IP.
 - **Trend sources:** public RSS feeds of ELLE Australia (fashion), marie claire Australia (fashion) and Who What Wear Australia, cached for 3 hours. Only articles from the last 30 days are used, the page links to every source, and article links are attached by the server (the AI only cites article IDs). Trend results are cached in the viewer's browser for 12 hours to save quota.
 - **Abuse limit:** a best-effort in-memory daily cap per IP and globally (`RATE_LIMIT_PER_IP`, default 80; `RATE_LIMIT_GLOBAL`, default 200). It's per server instance; cost safety comes from using a free-tier key with no billing attached.

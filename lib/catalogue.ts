@@ -6,6 +6,7 @@
 import { useSyncExternalStore } from "react";
 import seedJson from "@/data/catalogue.json";
 import { downloadFile } from "./download";
+import { clearPhotos, deletePhoto } from "./photos";
 import { TYPE_PREFIX, type CatalogueItem, type ItemTags, type ItemType } from "./schemas";
 import { sanitizeCatalogue } from "./validate";
 
@@ -144,6 +145,7 @@ export function updateItem(id: string, patch: ItemEdit) {
 
 export function removeItem(id: string) {
   init();
+  void deletePhoto(id);
   if (added!.some((i) => i.item_id === id)) {
     commit({ added: added!.filter((i) => i.item_id !== id) });
   } else if (SEED_IDS.has(id)) {
@@ -165,8 +167,9 @@ export function exportCatalogueJson() {
   downloadFile("catalogue.json", JSON.stringify(items, null, 2) + "\n", "application/json");
 }
 
-/** "Reset to my catalogue": drop everything this viewer added, edited or removed. */
+/** "Reset to my catalogue": drop everything this viewer added, edited or removed, and kept photos. */
 export function resetCatalogue() {
   init();
+  void clearPhotos();
   commit({ added: [], edits: { overrides: {}, removed: [] } });
 }

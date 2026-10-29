@@ -6,6 +6,7 @@ import { useSyncExternalStore } from "react";
 import { callAI } from "./api";
 import { addItem } from "./catalogue";
 import { prepareImage } from "./image";
+import { savePhoto } from "./photos";
 import type { CatalogueItem, ImageInput, ItemTags } from "./schemas";
 
 export const MAX_QUEUE = 12;
@@ -140,11 +141,15 @@ export function editEntry(key: string, value: ItemTags) {
   update(key, { value });
 }
 
-/** The person confirms the (possibly edited) tags. This is the only path that saves. */
-export function saveEntry(key: string): CatalogueItem | null {
+/**
+ * The person confirms the (possibly edited) tags. This is the only path that saves.
+ * With keepPhoto, a small thumbnail is kept on this device (IndexedDB) for outfit views.
+ */
+export function saveEntry(key: string, { keepPhoto = false } = {}): CatalogueItem | null {
   const e = entries.find((x) => x.key === key);
   if (!e || e.status !== "draft" || !e.value) return null;
   const item = addItem({ ...e.value, colour: e.value.colour.trim(), notes: e.value.notes.trim() });
+  if (keepPhoto && e.preview) void savePhoto(item.item_id, e.preview);
   forget(key);
   update(key, { status: "saved", savedId: item.item_id, preview: null });
   return item;

@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ItemEditDialog } from "@/components/ItemEditDialog";
-import { SwingTag } from "@/components/SwingTag";
+import { GarmentCard } from "@/components/GarmentCard";
 import {
   exportCatalogueJson,
   isAddedHere,
@@ -13,6 +13,8 @@ import {
   resetCatalogue,
   useCatalogue,
 } from "@/lib/catalogue";
+import { prepareImage } from "@/lib/image";
+import { deletePhoto, savePhoto, usePhotos } from "@/lib/photos";
 import { ITEM_TYPES, type CatalogueItem, type ItemType } from "@/lib/schemas";
 
 const LEVELS = {
@@ -56,6 +58,23 @@ export default function WardrobePage() {
   const [source, setSource] = useState<"all" | "shipped" | "here">("all");
   const [sort, setSort] = useState<Sort>("type");
   const [editing, setEditing] = useState<CatalogueItem | null>(null);
+  const photos = usePhotos();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [photoFor, setPhotoFor] = useState<string | null>(null);
+  const [photoMsg, setPhotoMsg] = useState<string | null>(null);
+
+  // Attach a photo to an existing item: re-encoded in the browser and kept on this device only. No AI call.
+  async function attachPhoto(file: File) {
+    if (!photoFor) return;
+    setPhotoMsg(null);
+    try {
+      const img = await prepareImage(file);
+      if (!(await savePhoto(photoFor, img.previewUrl))) throw new Error("This browser can’t keep photos.");
+    } catch (err) {
+      setPhotoMsg((err as Error).message);
+    }
+    setPhotoFor(null);
+  }
 
   // Client-only flags (localStorage) after mount, so server and client markup match.
   const [mounted, setMounted] = useState(false);
@@ -103,7 +122,7 @@ export default function WardrobePage() {
         <div>
           <h1 className="font-serif text-display font-normal tracking-tight">Your wardrobe</h1>
           <p className="mt-3 text-graphite">
-            {catalogue.length} items. Search, filter and correct your tags here.
+            {catalogue.length} items. Search, filter, correct tags and add photos. Photos stay on this device.
           </p>
         </div>
         <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm">
@@ -119,7 +138,7 @@ export default function WardrobePage() {
               className="btn-quiet"
               onClick={() =>
                 window.confirm(
-                  `Undo your ${changes} change${changes === 1 ? "" : "s"} (added, edited or removed items) and go back to the original catalogue? Export first if you want to keep them.`,
+                  `Undo your ${changes} change${changes === 1 ? "" : "s"} (added, edited or removed items) and remove kept photos, going back to the original catalogue? Export first if you want to keep your items.`,
                 ) && resetCatalogue()
               }
             >
@@ -222,6 +241,7 @@ export default function WardrobePage() {
           <h2 id="results-h" className="care text-graphite">
             Showing {shown.length} of {catalogue.length}
           </h2>
+          {photoMsg && <p role="alert" className="text-sm">{photoMsg}</p>}
           {filtered && (
             <button type="button" className="btn-quiet text-sm" onClick={clear}>
               Clear filters
@@ -232,16 +252,20 @@ export default function WardrobePage() {
         {shown.length === 0 ? (
           <p className="font-serif text-xl text-graphite italic">Nothing matches those filters.</p>
         ) : (
-          <ul className="grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 lg:grid-cols-5">
+          <ul className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-5">
             {shown.map((item) => {
               const here = mounted && isAddedHere(item.item_id);
               const edited = mounted && isEditedHere(item.item_id);
               return (
                 <li key={item.item_id}>
-                  <SwingTag
+                  <GarmentCard
                     item={item}
+                    photoUrl={photos.get(item.item_id)}
                     note={
-                      <div className="mt-3 border-t border-hairline pt-2">
+                      <div className="mt-2 border-t border-hairline pt-2">
+                        <p className="care text-graphite">
+                          Formality {item.formality} · Warmth {item.warmth}
+                        </p>
                         {(here || edited) && (
                           <p className="care mb-1 text-graphite">{here ? "Added in this browser" : "Edited in this browser"}</p>
                         )}
@@ -266,6 +290,29 @@ export default function WardrobePage() {
                             Remove
                           </button>
                         </div>
+                        <div className="mt-1 flex gap-4 text-sm">
+                          <button
+                            type="button"
+                            className="btn-quiet text-graphite"
+                            aria-label={`${photos.has(item.item_id) ? "Replace" : "Add"} photo for ${item.item_id}`}
+                            onClick={() => {
+                              setPhotoFor(item.item_id);
+                              fileRef.current?.click();
+                            }}
+                          >
+                            {photos.has(item.item_id) ? "Replace photo" : "Add photo"}
+                          </button>
+                          {photos.has(item.item_id) && (
+                            <button
+                              type="button"
+                              className="btn-quiet text-graphite"
+                              aria-label={`Remove photo for ${item.item_id}`}
+                              onClick={() => deletePhoto(item.item_id)}
+                            >
+                              Remove photo
+                            </button>
+                          )}
+                        </div>
                       </div>
                     }
                   />
@@ -276,6 +323,19 @@ export default function WardrobePage() {
         )}
       </section>
 
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="sr-only"
+        tabIndex={-1}
+        aria-hidden
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) attachPhoto(f);
+          e.target.value = "";
+        }}
+      />
       <ItemEditDialog item={editing} onClose={() => setEditing(null)} />
     </div>
   );

@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { AiLabel } from "@/components/AiLabel";
-import { SwingTag } from "@/components/SwingTag";
+import { GarmentCard } from "@/components/GarmentCard";
 import { callAI } from "@/lib/api";
 import { useCatalogue } from "@/lib/catalogue";
+import { usePhotos } from "@/lib/photos";
 import type { TrendsResult } from "@/lib/schemas";
 
 // Per-viewer cache so revisiting the page doesn't spend another AI call (12 hours, per wardrobe).
@@ -19,6 +20,7 @@ type State =
 
 export default function StylePage() {
   const catalogue = useCatalogue();
+  const photos = usePhotos();
   const [state, setState] = useState<State>({ status: "idle" });
   const byId = useMemo(() => new Map(catalogue.map((i) => [i.item_id, i])), [catalogue]);
   const wardrobeKey = catalogue.map((i) => `${i.item_id}:${i.colour}:${i.notes}`).join("|");
@@ -137,7 +139,7 @@ export default function StylePage() {
                           <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
                             {t.item_ids.map((id) => (
                               <li key={id}>
-                                <SwingTag item={byId.get(id)} fallback={{ item_id: id, description: "" }} />
+                                <GarmentCard item={byId.get(id)} fallback={{ item_id: id, description: "" }} photoUrl={photos.get(id)} />
                               </li>
                             ))}
                           </ul>
