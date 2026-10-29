@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AboutDialog } from "./AboutDialog";
+import { Icon } from "./Icon";
 
 const NAV = [
   { href: "/", label: "Plan an outfit" },
@@ -12,20 +13,25 @@ const NAV = [
   { href: "/style", label: "In style" },
 ];
 
+/** Two-tier masthead: wordmark + subtitle + About, then the page nav on its own row. */
 export function SiteHeader() {
   const path = usePathname();
   return (
     <header className="border-b border-ink">
-      <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 pt-6 pb-4 md:flex-row md:items-end md:justify-between md:px-8">
-        <div>
-          <Link href="/" className="font-serif text-[1.75rem] leading-none font-medium tracking-tight">
-            Rewear
-          </Link>
-          <p className="mt-2 max-w-md text-sm text-graphite">
-            AI-assisted outfit planner — suggestions only. You make the final call.
-          </p>
+      <div className="mx-auto max-w-6xl px-4 md:px-8">
+        <div className="flex items-center justify-between gap-6 pt-6 pb-4">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <Link href="/" className="group inline-flex items-center gap-2.5">
+              <span className="grid size-9 place-items-center rounded-full border border-ink transition-transform duration-200 group-hover:-rotate-6">
+                <Icon name="hanger" className="size-5" />
+              </span>
+              <span className="font-serif text-[1.85rem] leading-none font-medium tracking-tight">Rewear</span>
+            </Link>
+            <p className="text-sm text-graphite">AI-assisted outfit planner — suggestions only. You make the final call.</p>
+          </div>
+          <AboutDialog />
         </div>
-        <nav aria-label="Main" className="-mx-1 flex flex-wrap gap-x-5 gap-y-1 text-[0.9375rem]">
+        <nav aria-label="Main" className="-mx-3 flex gap-x-1 overflow-x-auto border-t border-hairline py-1.5 text-base">
           {NAV.map((n) => {
             const active = n.href === "/" ? path === "/" : path.startsWith(n.href);
             return (
@@ -33,15 +39,16 @@ export function SiteHeader() {
                 key={n.href}
                 href={n.href}
                 aria-current={active ? "page" : undefined}
-                className={`px-1 py-1 underline-offset-[6px] ${
-                  active ? "underline decoration-1" : "text-graphite hover:text-ink"
+                className={`shrink-0 rounded-md px-3 py-2 whitespace-nowrap underline-offset-[10px] ${
+                  active
+                    ? "font-semibold text-ink underline decoration-2"
+                    : "text-graphite decoration-transparent hover:bg-panel hover:text-ink"
                 }`}
               >
                 {n.label}
               </Link>
             );
           })}
-          <AboutDialog />
         </nav>
       </div>
     </header>

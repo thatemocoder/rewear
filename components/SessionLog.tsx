@@ -20,7 +20,7 @@ export function SessionLog() {
     <div className="w-full">
       <button
         type="button"
-        className="care text-graphite hover:text-ink"
+        className="font-mono text-[11px] text-graphite hover:text-ink"
         aria-expanded={open}
         aria-controls="session-log"
         onClick={() => setOpen((o) => !o)}

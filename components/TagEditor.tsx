@@ -24,9 +24,9 @@ export function TagEditor({
   const edited = (k: keyof ItemTags) => value[k] !== draft[k];
   // A render helper, not a component, so React doesn't see a new element type each render.
   const label = (k: keyof ItemTags, htmlFor: string, text: string) => (
-    <label htmlFor={htmlFor} className="care flex gap-2 text-graphite">
+    <label htmlFor={htmlFor} className="label flex items-center gap-2">
       {text}
-      {edited(k) && <span className="text-ink">· edited</span>}
+      {edited(k) && <span className="badge">edited</span>}
     </label>
   );
 

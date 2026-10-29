@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ItemEditDialog } from "@/components/ItemEditDialog";
 import { GarmentCard } from "@/components/GarmentCard";
+import { Icon } from "@/components/Icon";
+import { Dots } from "@/components/SwingTag";
 import {
   exportCatalogueJson,
   isAddedHere,
@@ -121,21 +123,19 @@ export default function WardrobePage() {
       <header className="flex flex-wrap items-end justify-between gap-x-10 gap-y-4">
         <div>
           <h1 className="font-serif text-display font-normal tracking-tight">Your wardrobe</h1>
-          <p className="mt-3 text-graphite">
-            {catalogue.length} items. Search, filter, correct tags and add photos. Photos stay on this device.
-          </p>
+          <p className="mt-2 text-graphite">{catalogue.length} pieces</p>
         </div>
-        <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm">
-          <Link href="/add" className="btn-quiet">
-            Add items
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
+          <Link href="/add" className="btn-secondary py-2 text-sm">
+            <Icon name="camera" /> Add items
           </Link>
-          <button type="button" className="btn-quiet" onClick={exportCatalogueJson}>
-            Export catalogue (JSON)
+          <button type="button" className="btn-secondary py-2 text-sm" onClick={exportCatalogueJson}>
+            <Icon name="upload" /> Export JSON
           </button>
           {changes > 0 && (
             <button
               type="button"
-              className="btn-quiet"
+              className="btn-quiet ml-1"
               onClick={() =>
                 window.confirm(
                   `Undo your ${changes} change${changes === 1 ? "" : "s"} (added, edited or removed items) and remove kept photos, going back to the original catalogue? Export first if you want to keep your items.`,
@@ -149,11 +149,11 @@ export default function WardrobePage() {
       </header>
 
       {/* ── Controls ── */}
-      <section aria-label="Search and filters" className="space-y-5 border-y border-ink py-5">
-        <div className="grid grid-cols-2 gap-5 md:grid-cols-[minmax(0,1fr)_auto_auto_auto_auto] md:items-end">
-          <div className="col-span-2 md:col-span-1">
-            <label htmlFor="search" className="care block text-graphite">
-              Search
+      <section aria-label="Search and filters" className="panel space-y-6">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-5 md:grid-cols-4 xl:grid-cols-[minmax(0,1.6fr)_repeat(4,minmax(0,1fr))] xl:items-end">
+          <div className="col-span-2 md:col-span-4 xl:col-span-1">
+            <label htmlFor="search" className="label flex items-center gap-1.5">
+              <Icon name="search" className="size-3.5" /> Search
             </label>
             <input
               id="search"
@@ -171,8 +171,8 @@ export default function WardrobePage() {
             ] as const
           ).map(([name, v, set, opts]) => (
             <div key={name}>
-              <label htmlFor={`f-${name}`} className="care block text-graphite">
-                {name}
+              <label htmlFor={`f-${name}`} className="label">
+                {name === "formality" ? "Formality" : "Warmth"}
               </label>
               <select id={`f-${name}`} className="field" value={v} onChange={(e) => set(Number(e.target.value))}>
                 {opts.map((o, i) => (
@@ -184,7 +184,7 @@ export default function WardrobePage() {
             </div>
           ))}
           <div>
-            <label htmlFor="f-source" className="care block text-graphite">
+            <label htmlFor="f-source" className="label">
               Source
             </label>
             <select
@@ -199,7 +199,7 @@ export default function WardrobePage() {
             </select>
           </div>
           <div>
-            <label htmlFor="sort" className="care block text-graphite">
+            <label htmlFor="sort" className="label">
               Sort
             </label>
             <select id="sort" className="field" value={sort} onChange={(e) => setSort(e.target.value as Sort)}>
@@ -212,7 +212,7 @@ export default function WardrobePage() {
           </div>
         </div>
 
-        <div role="group" aria-label="Type" className="flex flex-wrap gap-2">
+        <div role="group" aria-label="Type" className="flex flex-wrap gap-2 border-t border-hairline pt-5">
           {(["all", ...ITEM_TYPES] as const).map((t) => {
             const on = type === t;
             return (
@@ -221,12 +221,10 @@ export default function WardrobePage() {
                 type="button"
                 aria-pressed={on}
                 onClick={() => setType(t)}
-                className={`border px-3 py-1 text-sm transition-colors ${
-                  on ? "border-ink bg-ink text-paper" : "border-hairline hover:border-ink"
-                }`}
+                className="pill"
               >
                 {t === "all" ? "All" : PLURAL[t]}{" "}
-                <span className={`font-mono text-xs ${on ? "" : "text-graphite"}`}>
+                <span className={`font-mono text-xs ${on ? "opacity-80" : "text-graphite"}`}>
                   {t === "all" ? catalogue.length : counts[t]}
                 </span>
               </button>
@@ -238,8 +236,8 @@ export default function WardrobePage() {
       {/* ── Results ── */}
       <section aria-labelledby="results-h" aria-live="polite">
         <div className="mb-5 flex items-baseline justify-between gap-4">
-          <h2 id="results-h" className="care text-graphite">
-            Showing {shown.length} of {catalogue.length}
+          <h2 id="results-h" className="text-sm text-graphite">
+            Showing <strong className="font-semibold text-ink">{shown.length}</strong> of {catalogue.length}
           </h2>
           {photoMsg && <p role="alert" className="text-sm">{photoMsg}</p>}
           {filtered && (
@@ -250,68 +248,65 @@ export default function WardrobePage() {
         </div>
 
         {shown.length === 0 ? (
-          <p className="font-serif text-xl text-graphite italic">Nothing matches those filters.</p>
+          <div className="flex flex-col items-center gap-3 py-12 text-graphite">
+            <Icon name="hanger" className="size-10" />
+            <p>Nothing matches.</p>
+          </div>
         ) : (
           <ul className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-5">
             {shown.map((item) => {
               const here = mounted && isAddedHere(item.item_id);
               const edited = mounted && isEditedHere(item.item_id);
               return (
-                <li key={item.item_id}>
+                <li key={item.item_id} className="lift">
                   <GarmentCard
                     item={item}
                     photoUrl={photos.get(item.item_id)}
+                    corner={(here || edited) && <span className="badge bg-paper">{here ? "Added here" : "Edited"}</span>}
                     note={
-                      <div className="mt-2 border-t border-hairline pt-2">
-                        <p className="care text-graphite">
-                          Formality {item.formality} · Warmth {item.warmth}
-                        </p>
-                        {(here || edited) && (
-                          <p className="care mb-1 text-graphite">{here ? "Added in this browser" : "Edited in this browser"}</p>
-                        )}
-                        <div className="flex gap-4 text-sm">
-                          <button
-                            type="button"
-                            className="btn-quiet"
-                            onClick={() => setEditing(item)}
-                            aria-label={`Edit ${item.item_id}`}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            className="btn-quiet"
-                            aria-label={`Remove ${item.item_id}`}
-                            onClick={() =>
-                              window.confirm(`Remove ${item.item_id} (${item.colour} ${item.notes}) from your wardrobe?`) &&
-                              removeItem(item.item_id)
-                            }
-                          >
-                            Remove
-                          </button>
+                      <div className="mt-2 space-y-2 border-t border-hairline pt-2">
+                        <div className="space-y-1">
+                          <Dots label="Formality" value={item.formality} />
+                          <Dots label="Warmth" value={item.warmth} />
                         </div>
-                        <div className="mt-1 flex gap-4 text-sm">
+                        <div className="-ml-1.5 flex flex-wrap gap-x-0.5">
+                          <button type="button" className="btn-ghost" onClick={() => setEditing(item)} aria-label={`Edit ${item.item_id}`}>
+                            <Icon name="pencil" className="size-3.5" /> Edit
+                          </button>
                           <button
                             type="button"
-                            className="btn-quiet text-graphite"
+                            className="btn-ghost"
                             aria-label={`${photos.has(item.item_id) ? "Replace" : "Add"} photo for ${item.item_id}`}
                             onClick={() => {
                               setPhotoFor(item.item_id);
                               fileRef.current?.click();
                             }}
                           >
-                            {photos.has(item.item_id) ? "Replace photo" : "Add photo"}
+                            <Icon name="camera" className="size-3.5" /> Photo
                           </button>
                           {photos.has(item.item_id) && (
                             <button
                               type="button"
-                              className="btn-quiet text-graphite"
+                              className="btn-ghost"
                               aria-label={`Remove photo for ${item.item_id}`}
+                              title="Remove photo"
                               onClick={() => deletePhoto(item.item_id)}
                             >
-                              Remove photo
+                              <Icon name="x" className="size-3.5" />
                             </button>
                           )}
+                          <button
+                            type="button"
+                            className="btn-ghost"
+                            aria-label={`Remove ${item.item_id}`}
+                            title="Remove item"
+                            onClick={() =>
+                              window.confirm(`Remove ${item.item_id} (${item.colour} ${item.notes}) from your wardrobe?`) &&
+                              removeItem(item.item_id)
+                            }
+                          >
+                            <Icon name="trash" className="size-3.5" />
+                          </button>
                         </div>
                       </div>
                     }

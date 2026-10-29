@@ -24,9 +24,9 @@ export function DotScale({
   const uid = useId();
   return (
     <fieldset>
-      <legend className="care flex gap-2 text-graphite">
+      <legend className="label flex items-center gap-2">
         {label}
-        {edited && <span className="text-ink">· edited</span>}
+        {edited && <span className="badge">edited</span>}
       </legend>
       <div className="mt-1.5 flex items-center gap-1">
         {[1, 2, 3, 4, 5].map((n) => (

@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { AiLabel } from "@/components/AiLabel";
 import { GarmentCard } from "@/components/GarmentCard";
+import { Icon } from "@/components/Icon";
+import { TrendArt } from "@/components/TrendArt";
 import { callAI } from "@/lib/api";
 import { useCatalogue } from "@/lib/catalogue";
 import { usePhotos } from "@/lib/photos";
@@ -52,33 +54,40 @@ export default function StylePage() {
 
   return (
     <div className="space-y-12">
-      <header className="grid gap-6 md:grid-cols-[1fr_auto] md:items-end">
+      <header className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
         <div>
           <h1 className="font-serif text-display font-normal tracking-tight">What&apos;s in style</h1>
-          <p className="mt-3 max-w-2xl text-graphite">
-            Trends the AI has summarised from recent Australian fashion media, with ideas for wearing them with clothes you
-            already own. It&apos;s a reading list, not a shopping list.
-          </p>
+          <p className="mt-2 text-graphite">From Australian fashion media. A reading list, not a shopping list.</p>
         </div>
-        <button type="button" className="btn" onClick={load} disabled={state.status === "loading"}>
-          {state.status === "done" ? "Refresh trends" : state.status === "loading" ? "Reading…" : "Pull current trends"}
-          <span aria-hidden>→</span>
-        </button>
+        {state.status === "done" && (
+          <button type="button" className="btn-secondary" onClick={load}>
+            <Icon name="refresh" /> Refresh
+          </button>
+        )}
       </header>
 
       <section aria-live="polite" aria-busy={state.status === "loading"}>
-        {state.status === "idle" && (
-          <p className="max-w-md border-t border-hairline pt-4 font-serif text-xl leading-snug text-graphite italic">
-            Pull the trends to see what Australian fashion media are covering this month, and how your wardrobe can join in.
-          </p>
-        )}
-        {state.status === "loading" && (
-          <p className="breathe border-t border-hairline pt-4 font-serif text-xl italic">Reading this month&apos;s fashion pages…</p>
+        {(state.status === "idle" || state.status === "loading") && (
+          <div className="flex flex-col items-center gap-8 py-6">
+            <div className={`grid w-full max-w-xl grid-cols-3 gap-4 ${state.status === "loading" ? "breathe" : ""}`}>
+              {["linen shirt", "racerback tank", "striped knit"].map((t, i) => (
+                <div key={t} style={{ rotate: `${[-2, 1, -1][i]}deg` }}>
+                  <TrendArt text={t} index={i} />
+                </div>
+              ))}
+            </div>
+            <button type="button" className="btn" onClick={load} disabled={state.status === "loading"}>
+              {state.status === "loading" ? "Reading the fashion pages…" : "Pull current trends"} <Icon name="arrow" />
+            </button>
+          </div>
         )}
         {state.status === "error" && (
           <div className="rise border-t border-ink pt-4" role="alert">
-            <p className="care text-graphite">Something went wrong</p>
+            <p className="text-sm font-semibold">Something went wrong</p>
             <p className="mt-1 max-w-prose">{state.message}</p>
+            <button type="button" className="btn-secondary mt-4" onClick={load}>
+              <Icon name="refresh" /> Try again
+            </button>
           </div>
         )}
 
@@ -86,63 +95,72 @@ export default function StylePage() {
           <div className="rise">
             <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-t border-ink pt-2">
               <AiLabel>AI summary of fashion media</AiLabel>
-              <span className="care text-graphite">
+              <span className="text-xs text-graphite">
                 {state.result.articles.length} articles{state.result.as_of && ` · latest ${state.result.as_of}`} · pulled{" "}
                 {new Date(state.at).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" })}
               </span>
             </div>
 
             {state.result.trends.length === 0 ? (
-              <p className="mt-6 font-serif text-xl italic">The recent articles didn&apos;t describe any clear clothing trends.</p>
+              <p className="mt-6 font-serif text-xl italic">No clear clothing trends in the latest articles.</p>
             ) : (
               <ol className="mt-2 divide-y divide-hairline">
                 {state.result.trends.map((t, i) => {
                   const refs = t.source_ids.map((id) => articles.get(id)).filter(Boolean);
                   return (
-                    <li key={i} className="grid gap-6 py-10 md:grid-cols-[4rem_minmax(0,1fr)_minmax(0,1fr)] md:gap-10">
-                      <span className="font-serif text-5xl leading-none font-light text-graphite">
-                        {String(i + 1).padStart(2, "0")}
-                      </span>
+                    <li
+                      key={i}
+                      className="grid gap-6 py-10 sm:grid-cols-[9rem_minmax(0,1fr)] lg:grid-cols-[11rem_minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-10"
+                    >
+                      <div className={`w-36 sm:w-auto ${i % 2 ? "rotate-1" : "-rotate-1"}`}>
+                        <TrendArt text={`${t.name} ${t.summary}`} index={i} />
+                      </div>
                       <div>
                         <h2 className="font-serif text-3xl leading-tight">{t.name}</h2>
                         <p className="mt-3 max-w-prose">{t.summary}</p>
                         {t.brands.length > 0 && (
-                          <p className="mt-3 text-sm">
-                            <span className="care text-graphite">Mentioned · </span>
-                            {t.brands.join(", ")}
+                          <p className="mt-3 flex flex-wrap gap-1.5">
+                            {t.brands.map((b) => (
+                              <span key={b} className="badge">
+                                {b}
+                              </span>
+                            ))}
                           </p>
                         )}
                         {refs.length > 0 && (
-                          <div className="mt-4">
-                            <p className="care text-graphite">Sources</p>
-                            <ul className="mt-1 space-y-1 text-sm">
-                              {refs.map((a) => (
-                                <li key={a!.id}>
+                          <ul className="mt-4 space-y-1 text-sm">
+                            {refs.map((a) => (
+                              <li key={a!.id} className="flex gap-1.5">
+                                <Icon name="arrow" className="mt-1 size-3 -rotate-45 text-graphite" />
+                                <span>
                                   <a href={a!.url} target="_blank" rel="noopener noreferrer" className="btn-quiet">
                                     {a!.title}
                                   </a>
-                                  <span className="text-graphite">
-                                    {" "}
-                                    · {a!.source}
-                                    {a!.date && `, ${a!.date}`}
-                                  </span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <p className="care text-graphite">Try it with what you own</p>
-                        <p className="mt-2 font-serif text-lg leading-snug italic">{t.with_your_wardrobe}</p>
-                        {t.item_ids.length > 0 && (
-                          <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                            {t.item_ids.map((id) => (
-                              <li key={id}>
-                                <GarmentCard item={byId.get(id)} fallback={{ item_id: id, description: "" }} photoUrl={photos.get(id)} />
+                                  <span className="text-graphite"> · {a!.source}</span>
+                                </span>
                               </li>
                             ))}
                           </ul>
+                        )}
+                      </div>
+                      <div className="sm:col-span-2 lg:col-span-1">
+                        <p className="label">Try it with what you own</p>
+                        {t.item_ids.length > 0 ? (
+                          <>
+                            <p className="mt-1.5 font-serif text-lg leading-snug italic">{t.with_your_wardrobe}</p>
+                            <ul className="mt-4 grid grid-cols-3 gap-3">
+                              {t.item_ids.map((id) => (
+                                <li key={id} className="lift">
+                                  <GarmentCard item={byId.get(id)} fallback={{ item_id: id, description: "" }} photoUrl={photos.get(id)} />
+                                </li>
+                              ))}
+                            </ul>
+                          </>
+                        ) : (
+                          <p className="mt-2 flex items-start gap-2 text-sm text-graphite">
+                            <Icon name="hanger" className="mt-0.5 size-4" />
+                            {t.with_your_wardrobe || "Nothing in your wardrobe for this one yet."}
+                          </p>
                         )}
                       </div>
                     </li>
@@ -151,9 +169,9 @@ export default function StylePage() {
               </ol>
             )}
 
-            <p className="border-t border-hairline pt-4 text-sm text-graphite">
-              Summarised by AI from the RSS feeds of {sources.join(", ")}. Headlines and articles belong to their publishers;
-              follow the links to read them. Trends can be summarised wrongly, so check the sources. Your call.
+            <p className="flex items-start gap-2 border-t border-hairline pt-4 text-xs text-graphite">
+              <Icon name="info" className="size-3.5" />
+              Summarised by AI from {sources.join(", ")}. Articles belong to their publishers; check the sources. Your call.
             </p>
           </div>
         )}

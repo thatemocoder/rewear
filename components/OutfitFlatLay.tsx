@@ -31,7 +31,7 @@ export function OutfitFlatLay({
       </header>
       <ul className="mt-5 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4">
         {outfit.items.map((ref, i) => (
-          <li key={`${ref.item_id}-${i}`}>
+          <li key={`${ref.item_id}-${i}`} className="lift">
             <GarmentCard
               item={catalogue.get(ref.item_id)}
               fallback={ref}

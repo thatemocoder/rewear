@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { describeTime, distanceKm, findVenues, getForecast, isoDate, locate, preciseLocation } from "@/lib/context";
 import type { Forecast, Place, Venue } from "@/lib/schemas";
+import { Icon, weatherIcon } from "./Icon";
 
 export interface WhereWhenValue {
   place: Place | null;
@@ -35,7 +36,7 @@ export function WhereWhen({ onChange }: { onChange: (v: WhereWhenValue) => void 
   useEffect(() => {
     locate().then((p) => {
       setPlace(p);
-      setPlaceMsg(p ? null : "Couldn’t detect your area. Choose a venue, use your current location, or type the temperature.");
+      setPlaceMsg(p ? null : "Area unknown.");
     });
   }, []);
 
@@ -84,37 +85,40 @@ export function WhereWhen({ onChange }: { onChange: (v: WhereWhenValue) => void 
   const km = venue && place ? Math.round(distanceKm(place, venue)) : null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Where you are */}
       <div>
-        <p className="care text-graphite">Where you are</p>
-        {place && (
-          <p className="mt-1 text-sm">
-            {place.label}
-            <span className="text-graphite">
-              {place.source === "ip" ? " · approximate, from your connection" : " · from your device"}
+        <p className="label">You're in</p>
+        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+          {place && (
+            <span className="inline-flex items-center gap-1.5">
+              <Icon name="pin" className="size-3.5 text-graphite" />
+              {place.label}
+              <span className="badge" title={place.source === "ip" ? "Approximate, from your connection" : "From your device"}>
+                {place.source === "ip" ? "approx." : "device"}
+              </span>
             </span>
-          </p>
-        )}
-        {placeMsg && <p className="mt-1 text-sm text-graphite">{placeMsg}</p>}
-        {place?.source !== "device" && (
-          <button type="button" className="btn-quiet mt-1 text-sm" onClick={usePrecise}>
-            Use my current location
-          </button>
-        )}
+          )}
+          {placeMsg && <span className="text-graphite">{placeMsg}</span>}
+          {place?.source !== "device" && (
+            <button type="button" className="btn-quiet text-sm" onClick={usePrecise}>
+              Use my location
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Venue */}
       <div>
-        <label htmlFor="venue" className="care block text-graphite">
-          Venue <span className="normal-case tracking-normal">(optional)</span>
+        <label htmlFor="venue" className="label">
+          Venue <span className="opt">(optional)</span>
         </label>
         {venue ? (
           <div className="mt-1 border-b border-ink pb-2">
             <p className="font-medium">{venue.name}</p>
             <p className="text-sm text-graphite">
               {venue.kind}
-              {km !== null && ` · about ${km} km from you`}
+              {km !== null && ` · ${km} km away`}
             </p>
             <button
               type="button"
@@ -144,14 +148,20 @@ export function WhereWhen({ onChange }: { onChange: (v: WhereWhenValue) => void 
                   }
                 }}
               />
-              <button type="button" className="btn-quiet shrink-0 pb-1.5 text-sm" onClick={search} disabled={searching}>
+              <button
+                type="button"
+                className="btn-ghost shrink-0 border-hairline"
+                onClick={search}
+                disabled={searching}
+                aria-label="Find venue"
+              >
+                <Icon name="search" className="size-3.5" />
                 {searching ? "Finding…" : "Find"}
               </button>
             </div>
             {venueMsg && <p className="mt-2 text-sm text-graphite">{venueMsg}</p>}
             {results && results.length > 0 && (
               <div className="mt-2">
-                <p className="text-xs text-graphite">Choose the right place:</p>
                 <ul className="mt-1 divide-y divide-hairline border-y border-hairline">
                   {results.map((v, i) => (
                     <li key={`${v.lat},${v.lon},${i}`}>
@@ -181,7 +191,7 @@ export function WhereWhen({ onChange }: { onChange: (v: WhereWhenValue) => void 
       {/* When */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="date" className="care block text-graphite">
+          <label htmlFor="date" className="label">
             Date
           </label>
           <input
@@ -195,7 +205,7 @@ export function WhereWhen({ onChange }: { onChange: (v: WhereWhenValue) => void 
           />
         </div>
         <div>
-          <label htmlFor="hour" className="care block text-graphite">
+          <label htmlFor="hour" className="label">
             Time
           </label>
           <select id="hour" className="field" value={hour} onChange={(e) => setHour(Number(e.target.value))}>
@@ -208,19 +218,29 @@ export function WhereWhen({ onChange }: { onChange: (v: WhereWhenValue) => void 
         </div>
       </div>
 
-      {/* Forecast summary */}
-      <div aria-live="polite" className="text-sm">
+      {/* Forecast card */}
+      <div aria-live="polite">
         {forecast && forecastFor ? (
-          <p>
-            <span className="care text-graphite">Forecast · </span>
-            {forecastFor}, {describeTime(forecast.time)}: <strong className="font-medium">{forecast.temperature_c}°C</strong>
-            {forecast.feels_like_c !== forecast.temperature_c && `, feels like ${forecast.feels_like_c}°`}
-            {forecast.rain_chance_pct !== null && `, ${forecast.rain_chance_pct}% chance of rain`}, {forecast.conditions}.
-            <span className="block text-[11px] text-graphite">Weather data by Open-Meteo.com</span>
-          </p>
+          <div className="rise flex items-center gap-4 rounded-lg border border-hairline bg-card px-4 py-3">
+            <Icon name={weatherIcon(forecast.conditions)} className="size-9 text-ink" label={forecast.conditions} />
+            <div className="min-w-0 flex-1">
+              <p className="flex items-baseline gap-2">
+                <span className="font-serif text-3xl leading-none">{forecast.temperature_c}°</span>
+                {forecast.feels_like_c !== forecast.temperature_c && (
+                  <span className="text-xs text-graphite">feels {forecast.feels_like_c}°</span>
+                )}
+              </p>
+              <p className="mt-1 truncate text-xs text-graphite">
+                {forecast.conditions}
+                {forecast.rain_chance_pct !== null && ` · ${forecast.rain_chance_pct}% rain`} · {describeTime(forecast.time)}
+              </p>
+              <p className="truncate text-xs text-graphite">{forecastFor}</p>
+            </div>
+          </div>
         ) : (
-          forecastMsg && <p className="text-graphite">{forecastMsg}</p>
+          forecastMsg && <p className="text-sm text-graphite">{forecastMsg}</p>
         )}
+        {forecast && <p className="mt-1 text-right text-[10px] text-graphite">Weather data by Open-Meteo.com</p>}
       </div>
     </div>
   );

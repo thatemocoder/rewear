@@ -83,10 +83,7 @@ export function StylistNotes({
           AI stylist
         </span>
       </div>
-      <p className="mt-1 max-w-prose text-sm text-graphite">
-        Hem is Rewear&apos;s AI stylist, not a person. Ask for changes to these looks; Hem only uses your wardrobe, and
-        you decide what to wear.
-      </p>
+      <p className="mt-1 text-sm text-graphite">An AI stylist, not a person. Only uses your wardrobe.</p>
 
       {turns.length > 0 && (
         <ol className="mt-6 space-y-6" aria-live="polite">
@@ -139,13 +136,13 @@ export function StylistNotes({
                 type="button"
                 disabled={busy}
                 onClick={() => send(q)}
-                className="border border-hairline px-3 py-1 text-sm hover:border-ink disabled:opacity-50"
+                className="pill disabled:opacity-50"
               >
                 {q}
               </button>
             ))}
           </div>
-          <label htmlFor="hem-input" className="care mt-4 block text-graphite">
+          <label htmlFor="hem-input" className="label mt-4">
             Your note to Hem
           </label>
           <div className="flex items-end gap-4">

@@ -66,7 +66,7 @@ export function WardrobeStrip({
         {sorted.map((item) => {
           const mark = marks.get(item.item_id);
           return (
-            <li key={item.item_id} className="w-40 shrink-0">
+            <li key={item.item_id} className="lift w-40 shrink-0">
               <SwingTag
                 item={item}
                 variant={mark ? "picked" : "default"}

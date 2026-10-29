@@ -46,7 +46,7 @@ export function ItemEditDialog({ item, onClose }: { item: CatalogueItem | null; 
           </div>
           <p className="care text-graphite">Type · {item.type}</p>
           <div>
-            <label htmlFor={`${uid}-colour`} className="care block text-graphite">
+            <label htmlFor={`${uid}-colour`} className="label">
               Colour
             </label>
             <input
@@ -59,7 +59,7 @@ export function ItemEditDialog({ item, onClose }: { item: CatalogueItem | null; 
             />
           </div>
           <div>
-            <label htmlFor={`${uid}-notes`} className="care block text-graphite">
+            <label htmlFor={`${uid}-notes`} className="label">
               Notes
             </label>
             <input

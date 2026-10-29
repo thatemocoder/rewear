@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, type ReactNode } from "react";
+import { Icon } from "./Icon";
 
 function Block({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -28,10 +29,11 @@ export function AboutDialog() {
     <>
       <button
         type="button"
-        className="px-1 py-1 text-graphite hover:text-ink"
+        className="inline-flex items-center gap-1.5 rounded-full border border-hairline px-3 py-1 text-sm text-graphite hover:border-ink hover:text-ink"
         aria-haspopup="dialog"
         onClick={() => ref.current?.showModal()}
       >
+        <Icon name="info" />
         About
       </button>
       <dialog

@@ -3,16 +3,14 @@ import type { CatalogueItem, ItemRef } from "@/lib/schemas";
 
 export type TagVariant = "default" | "picked" | "draft" | "unknown";
 
+/** 1–5 scale as a segmented bar: easier to read at small sizes than dots. */
 export function Dots({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex items-center justify-between gap-2">
-      <span className="care text-graphite">{label}</span>
-      <span className="flex gap-[3px]" role="img" aria-label={`${label} ${value} of 5`}>
+      <span className="text-xs text-graphite">{label}</span>
+      <span className="flex gap-[2px]" role="img" aria-label={`${label} ${value} of 5`}>
         {[1, 2, 3, 4, 5].map((n) => (
-          <span
-            key={n}
-            className={`size-[7px] rounded-full border border-ink ${n <= value ? "bg-ink" : "bg-transparent"}`}
-          />
+          <span key={n} className={`h-[5px] w-[9px] rounded-[1px] ${n <= value ? "bg-ink" : "bg-hairline"}`} />
         ))}
       </span>
     </div>

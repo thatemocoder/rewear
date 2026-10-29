@@ -2,7 +2,9 @@
 
 import { useMemo, useRef, useState, type FormEvent } from "react";
 import { AiLabel } from "@/components/AiLabel";
+import { Icon } from "@/components/Icon";
 import { PhotoDrop } from "@/components/PhotoDrop";
+import { EmptyCompare } from "@/components/EmptyCompare";
 import { GarmentCard } from "@/components/GarmentCard";
 import { WardrobeStrip } from "@/components/WardrobeStrip";
 import { callAI } from "@/lib/api";
@@ -63,16 +65,17 @@ export default function BuyPage() {
 
   return (
     <div className="space-y-16">
-      <div className="grid gap-12 md:grid-cols-[17rem_1fr] lg:gap-20">
+      <div className="grid gap-12 md:grid-cols-[20rem_1fr] lg:gap-16">
         <section aria-labelledby="buy-h">
           <h1 id="buy-h" className="font-serif text-display font-normal tracking-tight">
             Before you buy
           </h1>
-          <p className="mt-3 text-graphite">See how something you&apos;re considering overlaps with what you already own.</p>
+          <p className="mt-2 text-graphite">How it overlaps with what you own.</p>
 
-          <form onSubmit={submit} className="mt-8 space-y-6">
+          <form onSubmit={submit} className="mt-8 space-y-4">
+            <div className="panel space-y-5">
             <div>
-              <label htmlFor="considering" className="care block text-graphite">
+              <label htmlFor="considering" className="label">
                 What are you considering?
               </label>
               <input
@@ -86,10 +89,10 @@ export default function BuyPage() {
               />
             </div>
             <div>
-              <p className="care mb-2 text-graphite">
-                Photo <span className="normal-case tracking-normal">(optional)</span>
+              <p className="label mb-2">
+                Photo <span className="opt">(optional)</span>
               </p>
-              <PhotoDrop onFiles={choosePhoto} compact previewUrl={photo?.previewUrl} prompt="Add a photo" hint="or choose a file" />
+              <PhotoDrop onFiles={choosePhoto} compact previewUrl={photo?.previewUrl} prompt="Add a photo" hint="Drop or browse" />
               {photo && (
                 <button type="button" className="btn-quiet mt-2 text-sm" onClick={() => setPhoto(null)}>
                   Remove photo
@@ -97,8 +100,9 @@ export default function BuyPage() {
               )}
               {photoError && <p className="mt-2 text-sm">{photoError}</p>}
             </div>
-            <button type="submit" className="btn" disabled={state.status === "loading"}>
-              {state.status === "loading" ? "Working…" : "Check my wardrobe"} <span aria-hidden>→</span>
+            </div>
+            <button type="submit" className="btn w-full justify-between" disabled={state.status === "loading"}>
+              {state.status === "loading" ? "Working…" : "Check my wardrobe"} <Icon name="arrow" />
             </button>
           </form>
         </section>
@@ -113,11 +117,7 @@ export default function BuyPage() {
           <h2 id="buy-results-h" className="sr-only">
             Comparison
           </h2>
-          {state.status === "idle" && (
-            <p className="max-w-sm border-t border-hairline pt-4 font-serif text-xl leading-snug text-graphite italic">
-              The overlap with your wardrobe appears here. The decision stays with you.
-            </p>
-          )}
+          {state.status === "idle" && <EmptyCompare />}
           {state.status === "loading" && (
             <p className="breathe border-t border-hairline pt-4 font-serif text-xl italic">Comparing with your wardrobe…</p>
           )}

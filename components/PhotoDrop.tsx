@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import { Icon } from "./Icon";
 
 /** File picker + drop zone. The input stays keyboard-focusable. */
 export function PhotoDrop({
@@ -8,8 +9,8 @@ export function PhotoDrop({
   multiple = false,
   disabled,
   previewUrl,
-  prompt = "Drop a photo of one garment",
-  hint = "or choose a file",
+  prompt = "Drop a photo",
+  hint = "or browse",
   compact = false,
 }: {
   onFiles: (files: File[]) => void;
@@ -26,6 +27,7 @@ export function PhotoDrop({
   return (
     <label
       htmlFor={id}
+      data-over={over}
       onDragOver={(e) => {
         e.preventDefault();
         if (!disabled) setOver(true);
@@ -37,9 +39,9 @@ export function PhotoDrop({
         const list = [...e.dataTransfer.files];
         if (list.length && !disabled) onFiles(multiple ? list : list.slice(0, 1));
       }}
-      className={`relative grid cursor-pointer place-items-center overflow-hidden border bg-card text-center transition-colors focus-within:outline-2 focus-within:outline-offset-3 focus-within:outline-ink ${
-        over ? "border-ink" : "border-hairline hover:border-graphite"
-      } ${compact ? "min-h-28 p-4" : "aspect-[5/4] p-6 md:aspect-[4/5]"} ${disabled ? "cursor-wait" : ""}`}
+      className={`dropzone group relative grid cursor-pointer place-items-center overflow-hidden text-center focus-within:outline-2 focus-within:outline-offset-3 focus-within:outline-ink ${
+        compact ? "min-h-24 p-4" : "aspect-[5/4] p-6 md:aspect-[4/5]"
+      } ${disabled ? "cursor-wait" : ""}`}
     >
       <input
         id={id}
@@ -58,13 +60,22 @@ export function PhotoDrop({
         // In-memory data URL; kept on the device only if the person chooses to on Save.
         <img src={previewUrl} alt="Your photo" className="absolute inset-0 size-full object-contain p-3" />
       ) : (
-        <span>
-          <span className={`block font-serif italic ${compact ? "text-lg" : "text-2xl"}`}>{prompt}</span>
-          <span className="care mt-2 block text-graphite">{hint}</span>
+        <span className={`flex items-center gap-3 ${compact ? "flex-row" : "flex-col"}`}>
+          <span
+            className={`grid place-items-center rounded-full border border-hairline bg-paper transition-transform duration-200 group-hover:-translate-y-0.5 ${
+              compact ? "size-10" : "size-16"
+            }`}
+          >
+            <Icon name={compact ? "camera" : "upload"} className={compact ? "size-5" : "size-7"} />
+          </span>
+          <span className={compact ? "text-left" : ""}>
+            <span className="block font-medium">{prompt}</span>
+            <span className="block text-sm text-graphite">{hint}</span>
+          </span>
         </span>
       )}
       {previewUrl && !disabled && (
-        <span className="care absolute bottom-2 left-1/2 -translate-x-1/2 bg-paper px-2 py-1">Choose another</span>
+        <span className="badge absolute bottom-2 left-1/2 -translate-x-1/2 bg-paper">Choose another</span>
       )}
     </label>
   );

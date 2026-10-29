@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AiLabel } from "@/components/AiLabel";
+import { Icon } from "@/components/Icon";
 import { PhotoDrop } from "@/components/PhotoDrop";
 import { SwingTag } from "@/components/SwingTag";
 import { TagEditor } from "@/components/TagEditor";
@@ -75,27 +76,25 @@ export default function AddPage() {
 
   return (
     <div className="space-y-16">
-      <div className="grid gap-12 md:grid-cols-[17rem_1fr] lg:gap-20">
+      <div className="grid gap-12 md:grid-cols-[20rem_1fr] lg:gap-16">
         <section aria-labelledby="add-h">
           <h1 id="add-h" className="font-serif text-display font-normal tracking-tight">
             Add items
           </h1>
-          <p className="mt-3 text-graphite">
-            Photograph one piece per photo. The AI drafts the tags; you check every field before anything joins your
-            wardrobe.
-          </p>
+          <p className="mt-2 text-graphite">One garment per photo.</p>
           <div className="mt-8">
-            <PhotoDrop
-              onFiles={addFiles}
-              multiple
-              prompt="Drop photos, one garment each"
-              hint={`or choose files · up to ${MAX_QUEUE}`}
-            />
+            <PhotoDrop onFiles={addFiles} multiple prompt="Drop photos here" hint={`or browse · up to ${MAX_QUEUE}`} />
           </div>
-          <p className="mt-3 text-sm text-graphite">
-            Your browser re-encodes each photo (removing location data) and sends it once to draft tags. Photos are tagged
-            one at a time. Nothing is stored on a server; you can choose to keep a small copy on this device.
-          </p>
+          <details className="group mt-3 text-sm">
+            <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 rounded-md py-1 text-graphite hover:text-ink [&::-webkit-details-marker]:hidden">
+              <Icon name="shield" className="size-4" /> Privacy
+              <Icon name="chevron" className="size-3.5 transition-transform duration-200 group-open:rotate-180" />
+            </summary>
+            <p className="mt-2 rounded-lg border border-hairline bg-card p-3 text-graphite">
+              Each photo is re-encoded in your browser (location data removed) and sent once to draft tags. Nothing is stored
+              on a server. You can keep a small copy on this device only.
+            </p>
+          </details>
           {notice && (
             <p className="mt-2 text-sm" role="status">
               {notice}
@@ -128,9 +127,18 @@ export default function AddPage() {
                   </div>
                 </div>
               ) : (
-                <p className="max-w-sm border-t border-hairline pt-4 font-serif text-xl leading-snug text-graphite italic">
-                  Draft tags appear here, one photo at a time. Nothing is saved until you say so.
-                </p>
+                <div className="flex flex-col items-center gap-4 py-10 text-center">
+                  <span className="swing w-28 -rotate-3" aria-hidden>
+                    <span className="swing-body flex h-36 flex-col justify-end px-3 pb-3">
+                      <span className="swing-hole" />
+                      <span className="mb-2 h-1.5 w-12 rounded-full bg-hairline" />
+                      <span className="mb-1 h-1.5 w-16 rounded-full bg-hairline" />
+                      <span className="h-1.5 w-10 rounded-full bg-hairline" />
+                    </span>
+                  </span>
+                  <p className="font-serif text-lg text-graphite italic">Draft tags appear here.</p>
+                  <p className="-mt-3 text-sm text-graphite">Nothing saves until you do.</p>
+                </div>
               )}
             </>
           )}
@@ -143,7 +151,7 @@ export default function AddPage() {
 
           {active && (
             <div key={active.key} className="rise">
-              <p className="care mb-4 text-graphite">
+              <p className="mb-4 text-sm text-graphite">
                 {[
                   open.length > 1 && `${open.length - 1} more in the queue`,
                   working && working.key !== active.key && (working.status === "waiting" ? "pausing for the AI's per-minute limit" : "reading the next photo"),
@@ -153,7 +161,7 @@ export default function AddPage() {
               </p>
 
               <div className="grid gap-6 sm:grid-cols-[9rem_1fr]">
-                <div className="aspect-[4/5] w-36 border border-hairline bg-card">
+                <div className="aspect-[4/5] w-36 overflow-hidden rounded-lg border border-hairline bg-card">
                   {active.preview && (
                     <img src={active.preview} alt={`Photo: ${active.name}`} className="size-full object-contain p-2" />
                   )}
@@ -163,9 +171,7 @@ export default function AddPage() {
                   <form onSubmit={save} className="max-w-md">
                     <div className="mb-4">
                       <AiLabel>AI tags — check before saving</AiLabel>
-                      <p className="mt-1 text-sm text-graphite">
-                        Every field is a guess from the photo. Correct anything that&apos;s wrong.
-                      </p>
+
                     </div>
                     <TagEditor
                       itemId={nextItemId(active.value.type, catalogue)}
@@ -184,8 +190,8 @@ export default function AddPage() {
                         }}
                       />
                       <span>
-                        Keep a small photo on this device for outfit views
-                        <span className="block text-xs text-graphite">Stays in this browser only; never uploaded.</span>
+                        Keep photo on this device
+                        <span className="block text-xs text-graphite">For outfit views · never uploaded</span>
                       </span>
                     </label>
                     <div className="mt-5 flex flex-wrap items-center gap-5">

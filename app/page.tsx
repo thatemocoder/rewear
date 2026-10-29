@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } fro
 import { AiLabel, YourCall } from "@/components/AiLabel";
 import { OutfitFlatLay } from "@/components/OutfitFlatLay";
 import { StylistNotes } from "@/components/StylistNotes";
+import { EmptyRail } from "@/components/EmptyRail";
+import { Icon } from "@/components/Icon";
 import { WardrobeStrip } from "@/components/WardrobeStrip";
 import { WhereWhen, type WhereWhenValue } from "@/components/WhereWhen";
 import { callAI } from "@/lib/api";
@@ -90,104 +92,125 @@ export default function PlanPage() {
 
   return (
     <div className="space-y-16">
-      <div className="grid gap-12 md:grid-cols-[17rem_1fr] lg:gap-20">
+      <div className="grid gap-12 md:grid-cols-[20rem_1fr] lg:gap-16">
         {/* ── Brief ── */}
         <section aria-labelledby="plan-h">
           <h1 id="plan-h" className="font-serif text-display font-normal tracking-tight">
             Plan an outfit
           </h1>
-          <p className="mt-3 text-graphite">Combinations from clothes you already own. You choose what to wear.</p>
+          <p className="mt-2 text-graphite">From clothes you already own.</p>
 
-          <form onSubmit={submit} className="mt-8 space-y-6">
-            <div>
-              <label htmlFor="occasion" className="care block text-graphite">
-                Occasion
-              </label>
-              <input
-                id="occasion"
-                className="field"
-                required
-                maxLength={200}
-                placeholder="uni day, networking event…"
-                value={occasion}
-                onChange={(e) => setOccasion(e.target.value)}
-              />
-            </div>
-            <WhereWhen onChange={onWhereWhen} />
-            <div>
-              <label htmlFor="temp" className="care block text-graphite">
-                Temperature (°C)
-              </label>
-              <input
-                id="temp"
-                className="field"
-                type="number"
-                inputMode="numeric"
-                required
-                min={-30}
-                max={55}
-                step={1}
-                placeholder="18"
-                value={temp}
-                aria-describedby="temp-source"
-                onChange={(e) => {
-                  setTemp(e.target.value);
-                  setTempSource("manual");
-                }}
-              />
-              <p id="temp-source" className="mt-1 text-xs text-graphite">
-                {tempSource === "manual" ? (
-                  <>
-                    Your number will be used.{" "}
-                    {ww?.forecast && (
-                      <button type="button" className="btn-quiet" onClick={() => setTempSource("forecast")}>
-                        Use forecast ({ww.forecast.temperature_c}°)
-                      </button>
-                    )}
-                  </>
-                ) : ww?.forecast ? (
-                  "Filled from the forecast. Change it if you know better."
-                ) : (
-                  "Type the expected temperature."
-                )}
+          <form onSubmit={submit} className="mt-8 space-y-4">
+            <fieldset className="panel space-y-5">
+              <legend className="sr-only">The occasion</legend>
+              <p className="panel-title" aria-hidden>
+                <Icon name="calendar" /> The occasion
               </p>
-            </div>
-            <div>
-              <label htmlFor="dress" className="care block text-graphite">
-                Dress code
-              </label>
-              <select
-                id="dress"
-                className="field"
-                required
-                value={dressCode}
-                onChange={(e) => setDressCode(e.target.value)}
-              >
-                <option value="" disabled>
-                  Choose…
-                </option>
-                {DRESS_CODES.map((d) => (
-                  <option key={d} value={d}>
-                    {d[0].toUpperCase() + d.slice(1)}
+              <div>
+                <label htmlFor="occasion" className="label">
+                  What for?
+                </label>
+                <input
+                  id="occasion"
+                  className="field"
+                  required
+                  maxLength={200}
+                  placeholder="uni day, networking event…"
+                  value={occasion}
+                  onChange={(e) => setOccasion(e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor="notes" className="label">
+                  Anything else <span className="opt">(optional)</span>
+                </label>
+                <input
+                  id="notes"
+                  className="field"
+                  maxLength={200}
+                  placeholder="invite says ‘cocktail’"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                />
+              </div>
+            </fieldset>
+
+            <fieldset className="panel">
+              <legend className="sr-only">Where and when</legend>
+              <p className="panel-title" aria-hidden>
+                <Icon name="pin" /> Where &amp; when
+              </p>
+              <WhereWhen onChange={onWhereWhen} />
+            </fieldset>
+
+            <fieldset className="panel space-y-5">
+              <legend className="sr-only">Conditions</legend>
+              <p className="panel-title" aria-hidden>
+                <Icon name="thermo" /> Conditions
+              </p>
+              <div>
+                <label htmlFor="temp" className="label">
+                  Temperature (°C)
+                </label>
+                <input
+                  id="temp"
+                  className="field"
+                  type="number"
+                  inputMode="numeric"
+                  required
+                  min={-30}
+                  max={55}
+                  step={1}
+                  placeholder="18"
+                  value={temp}
+                  aria-describedby="temp-source"
+                  onChange={(e) => {
+                    setTemp(e.target.value);
+                    setTempSource("manual");
+                  }}
+                />
+                <p id="temp-source" className="mt-1.5 text-xs text-graphite">
+                  {tempSource === "manual" ? (
+                    <>
+                      Using your number.{" "}
+                      {ww?.forecast && (
+                        <button type="button" className="btn-quiet" onClick={() => setTempSource("forecast")}>
+                          Use forecast ({ww.forecast.temperature_c}°)
+                        </button>
+                      )}
+                    </>
+                  ) : ww?.forecast ? (
+                    "From the forecast · editable"
+                  ) : (
+                    "Type the expected temperature"
+                  )}
+                </p>
+              </div>
+              <div>
+                <label htmlFor="dress" className="label">
+                  Dress code
+                </label>
+                <select
+                  id="dress"
+                  className="field"
+                  required
+                  value={dressCode}
+                  onChange={(e) => setDressCode(e.target.value)}
+                >
+                  <option value="" disabled>
+                    Choose…
                   </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="notes" className="care block text-graphite">
-                Anything else <span className="normal-case tracking-normal">(optional)</span>
-              </label>
-              <input
-                id="notes"
-                className="field"
-                maxLength={200}
-                placeholder="invite says ‘cocktail’"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-              />
-            </div>
-            <button type="submit" className="btn" disabled={state.status === "loading"}>
-              {state.status === "loading" ? "Working…" : "Pull outfits"} <span aria-hidden>→</span>
+                  {DRESS_CODES.map((d) => (
+                    <option key={d} value={d}>
+                      {d[0].toUpperCase() + d.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </fieldset>
+
+            <button type="submit" className="btn w-full justify-between" disabled={state.status === "loading"}>
+              {state.status === "loading" ? "Working…" : "Pull outfits"} <Icon name="arrow" />
             </button>
           </form>
         </section>
@@ -197,11 +220,7 @@ export default function PlanPage() {
           <h2 id="results-h" className="sr-only">
             Suggestions
           </h2>
-          {state.status === "idle" && (
-            <p className="max-w-sm border-t border-hairline pt-4 font-serif text-xl leading-snug text-graphite italic">
-              Outfits appear here, built only from the items in your wardrobe.
-            </p>
-          )}
+          {state.status === "idle" && <EmptyRail />}
           {state.status === "loading" && (
             <p className="breathe border-t border-hairline pt-4 font-serif text-xl italic">
               Pulling options from your wardrobe…

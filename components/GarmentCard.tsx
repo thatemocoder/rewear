@@ -16,6 +16,7 @@ export function GarmentCard({
   picked = false,
   tilt = 0,
   note,
+  corner,
 }: {
   item?: CatalogueItem;
   fallback?: ItemRef;
@@ -23,12 +24,13 @@ export function GarmentCard({
   picked?: boolean;
   tilt?: number;
   note?: ReactNode;
+  corner?: ReactNode; // small overlay in the image's top-right corner (e.g. a badge)
 }) {
   const id = item?.item_id ?? fallback?.item_id ?? "—";
   return (
     <figure className="h-full" style={tilt ? { rotate: `${tilt}deg` } : undefined}>
       <div
-        className={`relative aspect-[4/5] overflow-hidden border bg-card ${picked ? "border-ink border-[1.5px]" : "border-hairline"} ${
+        className={`relative aspect-[4/5] overflow-hidden rounded-lg border bg-card ${picked ? "border-ink border-[1.5px]" : "border-hairline"} ${
           item ? "" : "bg-[repeating-linear-gradient(-45deg,var(--color-card)_0_6px,var(--color-paper)_6px_7px)]"
         }`}
       >
@@ -41,6 +43,7 @@ export function GarmentCard({
         ) : (
           <span className="care absolute inset-x-3 bottom-3 text-graphite">Not in your wardrobe</span>
         )}
+        {corner && <span className="absolute top-2 right-2">{corner}</span>}
         {/* Mini swing tag pinned to the corner */}
         <span className="swing absolute top-2 left-2 h-auto" style={{ ["--cut" as string]: "6px" }}>
           <span className="swing-body flex items-center gap-1.5 px-2 pt-1.5 pb-1">

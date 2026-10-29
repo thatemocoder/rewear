@@ -3,9 +3,11 @@
 /* ── Design tokens: the single source for colour, type and motion ── */
 @theme inline {
   --color-paper: #f4f0e8; /* page */
-  --color-card: #fbf8f2; /* swing-tag stock */
+  --color-card: #fbf8f2; /* swing-tag stock, raised surfaces */
+  --color-panel: #efe9df; /* grouped form sections */
   --color-ink: #1c1a17; /* text, rules, buttons — 15.3:1 on paper */
-  --color-graphite: #5f5950; /* secondary text — 6.1:1 on paper */
+  --color-graphite: #5f5950; /* secondary text — 6.1:1 on paper, 5.7:1 on panel */
+  --color-hint: #6f685f; /* placeholders — 4.8:1 on paper, 4.6:1 on panel */
   --color-hairline: #d3cbbe; /* 1px rules, tag edges (decorative) */
   --color-oxblood: #6b2525; /* AI-produced content ONLY — 9.6:1 on paper */
   --color-oxblood-wash: #f1e4e0; /* "Your call" fill */
@@ -15,11 +17,12 @@
   --font-mono: var(--font-mono-face), ui-monospace, monospace;
 
   /* type scale: 12 / 14 / 16 / 20 / 28 / 44 */
-  --text-micro: 0.6875rem; /* 11px care-label caps */
+  --text-micro: 0.6875rem; /* 11px care-label text */
   --text-display: 2.75rem;
   --text-display--line-height: 1.05;
 
   --ease-quiet: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --shadow-lift: 0 10px 24px -14px rgb(28 26 23 / 0.35);
 }
 
 @layer base {
@@ -27,11 +30,13 @@
     color-scheme: light;
   }
   body {
-    background: var(--color-paper);
     color: var(--color-ink);
     font-family: var(--font-sans);
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
+    /* Paper grain: a faint noise texture over the base colour */
+    background-color: var(--color-paper);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.11 0 0 0 0 0.1 0 0 0 0 0.09 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
   :focus-visible {
     outline: 2px solid var(--color-ink);
@@ -40,16 +45,61 @@
   ::selection {
     background: var(--color-oxblood-wash);
   }
+  ::placeholder {
+    color: var(--color-hint);
+    opacity: 1;
+  }
+  /* Quiet, consistent motion on everything interactive */
+  a,
+  button,
+  input,
+  select,
+  textarea,
+  summary,
+  label {
+    transition-property: color, background-color, border-color, text-decoration-color, box-shadow, transform, opacity;
+    transition-duration: 180ms;
+    transition-timing-function: ease;
+  }
 }
 
 @layer components {
-  /* Care-label micro text: mono, caps, tracked out */
+  /* Care-label micro text: mono caps, used sparingly (AI labels, IDs, meta) */
   .care {
     font-family: var(--font-mono);
     font-size: var(--text-micro);
-    letter-spacing: 0.12em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     line-height: 1.4;
+  }
+
+  /* Form labels: sentence case, semibold */
+  .label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--color-ink);
+  }
+  .label .opt {
+    font-weight: 400;
+    color: var(--color-graphite);
+  }
+
+  /* Grouped form section */
+  .panel {
+    background: color-mix(in srgb, var(--color-panel) 70%, transparent);
+    border: 1px solid var(--color-hairline);
+    border-radius: 0.75rem;
+    padding: 1.1rem 1.1rem 1.25rem;
+  }
+  .panel-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    margin-bottom: 0.9rem;
   }
 
   /* Form fields: underline only, like writing on a label */
@@ -61,6 +111,9 @@
     padding: 0.4rem 0;
     font-size: 1rem;
     border-radius: 0;
+  }
+  .field:hover {
+    border-bottom-color: #000;
   }
   .field:focus-visible {
     outline-offset: 2px;
@@ -75,32 +128,132 @@
     padding-right: 1.5rem;
   }
 
+  /* Buttons */
   .btn {
     display: inline-flex;
     align-items: center;
     gap: 0.6rem;
     background: var(--color-ink);
     color: var(--color-paper);
-    padding: 0.75rem 1.25rem;
+    padding: 0.8rem 1.25rem;
+    border-radius: 0.5rem;
     font-weight: 500;
     letter-spacing: 0.01em;
-    transition: background-color 150ms;
   }
-  .btn:hover {
+  .btn:hover:not(:disabled) {
     background: #000;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lift);
   }
   .btn:disabled {
     opacity: 0.55;
     cursor: not-allowed;
   }
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid var(--color-ink);
+    border-radius: 0.5rem;
+    padding: 0.7rem 1.1rem;
+    font-weight: 500;
+    background: transparent;
+  }
+  .btn-secondary:hover:not(:disabled) {
+    background: var(--color-card);
+    box-shadow: var(--shadow-lift);
+  }
+  /* Small ghost button with icon (card actions) */
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 1px solid transparent;
+    border-radius: 0.4rem;
+    padding: 0.2rem 0.45rem;
+    font-size: 0.8125rem;
+    color: var(--color-ink);
+  }
+  .btn-ghost:hover {
+    border-color: var(--color-hairline);
+    background: var(--color-paper);
+  }
   .btn-quiet {
     text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, var(--color-ink) 45%, transparent);
     text-underline-offset: 3px;
     text-decoration-thickness: 1px;
     color: var(--color-ink);
   }
   .btn-quiet:hover {
-    text-decoration-thickness: 2px;
+    text-decoration-color: var(--color-ink);
+  }
+
+  /* Pills and badges */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border: 1px solid var(--color-hairline);
+    border-radius: 9999px;
+    padding: 0.4rem 0.95rem;
+    font-size: 0.875rem;
+    background: var(--color-card);
+  }
+  .pill:hover {
+    border-color: var(--color-ink);
+  }
+  .pill[aria-pressed="true"] {
+    background: var(--color-ink);
+    border-color: var(--color-ink);
+    color: var(--color-paper);
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    border-radius: 9999px;
+    background: var(--color-panel);
+    color: var(--color-ink);
+    padding: 0.1rem 0.55rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  /* Hover lift for cards (filter so it also works on clip-path shapes) */
+  .lift {
+    transition: transform 180ms ease, filter 180ms ease;
+  }
+  .lift:hover {
+    transform: translateY(-3px);
+    filter: drop-shadow(0 8px 10px rgb(28 26 23 / 0.12));
+  }
+
+  /* Upload area */
+  .dropzone {
+    border: 1.5px dashed color-mix(in srgb, var(--color-ink) 45%, transparent);
+    border-radius: 0.75rem;
+    background: var(--color-card);
+  }
+  .dropzone:hover,
+  .dropzone[data-over="true"] {
+    border-color: var(--color-ink);
+    background: #fff;
+  }
+
+  /* Ornamental divider: hairline with a small diamond */
+  .ornament {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--color-hairline);
+  }
+  .ornament::before,
+  .ornament::after {
+    content: "";
+    height: 1px;
+    flex: 1;
+    background: currentColor;
   }
 
   /* ── Swing tag: clipped top corners via a two-layer clip-path (outer = edge colour) ── */
@@ -141,9 +294,6 @@
   .swing[data-variant="unknown"] > .swing-body {
     background: repeating-linear-gradient(-45deg, var(--color-card) 0 6px, var(--color-paper) 6px 7px);
   }
-  .swing[data-variant="muted"] {
-    opacity: 0.5;
-  }
 }
 
 /* ── Motion: subtle only ── */
@@ -176,5 +326,9 @@
   .rise,
   .breathe {
     animation: none;
+  }
+  .lift:hover,
+  .btn:hover:not(:disabled) {
+    transform: none;
   }
 }
