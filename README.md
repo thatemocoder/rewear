@@ -14,18 +14,21 @@ Rewear is a small AI-assisted outfit planner. It is a prototype for UNSW INFS570
 
 Most of us wear a small share of what we own and still feel we have "nothing to wear". That feeling drives repeat purchases of things we already have. Rewear works on both ends:
 
-1. **Plan an outfit:** suggestions built only from your own wardrobe, for an occasion, a temperature and a dress code.
-2. **Add items:** photograph clothes and the AI drafts their tags, which you confirm.
-3. **Before you buy:** see which things you already own play the same role as something you're considering, and roughly how many new outfits it would really add.
+1. **Plan an outfit:** suggestions built only from your own wardrobe, for an occasion, a dress code and an optional venue. The temperature is filled from a forecast for your area (or the venue) at the time you choose, and stays editable.
+2. **Talk it through with Hem:** a short conversation with Rewear's AI stylist to refine the looks ("something warmer", "different shoes").
+3. **Wardrobe:** search, filter, edit and remove items.
+4. **Add items:** photograph clothes (several at once) and the AI drafts their tags, which you confirm one by one.
+5. **Before you buy:** see which things you already own play the same role as something you're considering, and roughly how many new outfits it would really add.
+6. **What's in style:** trends summarised from recent Australian fashion media, each linked to its source articles, with ways to wear them using what you already own. A reading list, not a shopping list.
 
 ## The human–AI boundary
 
 | | |
 |---|---|
-| **AI may** | Draft tags (type, colour, formality, warmth, notes) from a photo of one garment. Combine catalogue items into up to 3 outfits with a one-line reason. Show overlap between a possible purchase and the wardrobe, with an estimate of new combinations. |
-| **AI must not** | Use items outside the catalogue. Save anything. Recommend buying or not buying, or comment on price. Give body-shape, size, fit or "flattering" advice. Suggest shopping when the wardrobe falls short. |
-| **AI hands to the human when** | The dress code is "not sure" or ambiguous, or the occasion is high-stakes (interview, formal event): a **Your call** note says what to check. A photo isn't a single garment: no tags, just the reason. Every purchase check ends with *"This is information, not a recommendation. Your call."* (fixed UI text, not AI-generated). |
-| **Human then** | Checks and edits every drafted tag field, and nothing saves without **Save**. Edited fields are marked `· edited`. Chooses which outfit, if any, to wear. Decides whether to buy. |
+| **AI may** | Draft tags (type, colour, formality, warmth, notes) from a photo of one garment. Combine catalogue items into up to 3 outfits with a one-line reason, using the venue type and forecast as context. Refine looks in conversation as **Hem**, a clearly labelled AI persona. Show overlap between a possible purchase and the wardrobe, with an estimate of new combinations. Summarise trends **only** from the supplied articles and map them to owned items. |
+| **AI must not** | Use items outside the catalogue. Save anything. Recommend buying or not buying, or comment on price. Give body-shape, size, fit or "flattering" advice. Suggest shopping when the wardrobe falls short. Claim to be human. Invent trends, brands or sources. |
+| **AI hands to the human when** | The dress code is "not sure" or ambiguous, or the occasion is high-stakes (interview, formal event): a **Your call** note says what to check. A photo isn't a single garment: no tags, just the reason. Every purchase check ends with *"This is information, not a recommendation. Your call."* (fixed UI text, not AI-generated). The venue type suggests a different formality from the chosen dress code: the dress code wins and a **Your call** note asks them to check. |
+| **Human then** | Checks and edits every drafted tag field, and nothing saves without **Save**. Edited fields are marked `· edited`. Picks the venue from search results, and can overwrite the forecast temperature (their number wins). Chooses which outfit, if any, to wear. Decides whether to buy, and whether a trend is for them. |
 | **How the user knows AI is involved** | Everything AI-generated carries an oxblood label (**AI suggestion**, **AI tags — check before saving**). Oxblood is used for nothing else. The prompt version is in the footer, a session log lists every AI call, and an About dialog explains it all. |
 
 ## How it works
@@ -35,8 +38,10 @@ Browser (components/, app/*/page.tsx)
   │  catalogue (seed JSON + this browser's additions) and form inputs
   │  photos re-encoded on a canvas first: EXIF/GPS stripped, ≤1024px, never stored
   ▼
-/api/plan · /api/tag · /api/buy  (Next.js route handlers)
+/api/plan · /api/stylist · /api/tag · /api/buy · /api/trends   (AI routes)
   └─ lib/runFeature.ts: validate → daily cap → versioned prompt → Gemini → parse
+/api/locate · /api/venue · /api/forecast   (no AI: lib/place.ts)
+/api/trends also reads lib/feeds.ts (fashion media RSS) before calling the AI
        ├─ lib/prompts.ts   prompts/<feature>_<version>.md, bundled at build time
        ├─ lib/gemini.ts    the only module that calls the API (key is server-side only)
        └─ lib/parse.ts     all AI-response parsing in one place
@@ -45,18 +50,20 @@ Browser (components/, app/*/page.tsx)
 - **Stack:** Next.js (App Router) + TypeScript, Tailwind v4 (design tokens in `app/globals.css`), `@google/genai`. No database, no accounts.
 - **Model:** `gemini-3.5-flash-lite`, set in one constant in `lib/gemini.ts`. During the build, `gemini-3.8-flash` returned constant 503 "high demand" errors on the free tier, and `gemini-3.6-flash` allowed only 20 requests a day; Flash-Lite allows about 500. Transient 500/503 errors are retried twice. When Gemini's per-minute limit is hit, the photo queue waits and retries; when the daily quota is used up, the app says when it resets.
 - **UI and logic are separate.** Components only render. Everything else is in `lib/` and the API routes, so the front end can be redesigned without touching AI logic.
-- **Storage:** the seed catalogue ships as `data/catalogue.json`. Items you add live in your browser's `localStorage`. **Export catalogue (JSON)** downloads the full wardrobe in the seed format, and **Reset to my catalogue** removes your additions.
+- **Storage:** the seed catalogue ships as `data/catalogue.json`. Items you add live in your browser's `localStorage` (`rewear.added.v1`); edits and removals of shipped items are kept separately (`rewear.edits.v1`). **Export catalogue (JSON)** downloads the full wardrobe in the seed format, and **Reset to my catalogue** undoes all local changes.
+- **Context data (no AI, no keys):** approximate area from Vercel's IP geolocation headers (not stored); venues from [OpenStreetMap Nominatim](https://nominatim.org/) (© OpenStreetMap contributors, ≤1 request/second, searched on demand only); hourly forecasts from [Open-Meteo](https://open-meteo.com/) (CC BY 4.0). All are called from the server, so they never see the viewer's IP.
+- **Trend sources:** public RSS feeds of ELLE Australia (fashion), marie claire Australia (fashion) and Who What Wear Australia, cached for 3 hours. Only articles from the last 30 days are used, the page links to every source, and article links are attached by the server (the AI only cites article IDs). Trend results are cached in the viewer's browser for 12 hours to save quota.
 - **Abuse limit:** a best-effort in-memory daily cap per IP and globally (`RATE_LIMIT_PER_IP`, default 80; `RATE_LIMIT_GLOBAL`, default 200). It's per server instance; cost safety comes from using a free-tier key with no billing attached.
 
 ## Evidence features
 
-**Versioned prompts.** Each feature's system prompt is its own file: `prompts/plan_v1.md`, `prompts/tag_v1.md`, `prompts/buy_v1.md`. The active version is set in `prompts/config.json`:
+**Versioned prompts.** Each feature's system prompt is its own file in `prompts/`: `plan_v1.md`, `plan_v2.md` (adds venue, time and forecast context), `stylist_v1.md` (Hem's persona and rules), `tag_v1.md`, `buy_v1.md` and `trends_v1.md`. The active version is set in `prompts/config.json`:
 
 ```json
-{ "plan": "v1", "tag": "v1", "buy": "v1" }
+{ "plan": "v2", "tag": "v1", "buy": "v1", "stylist": "v1", "trends": "v1" }
 ```
 
-To test a redesign, add `prompts/plan_v2.md` and change `"plan": "v2"`, a one-line change. The build fails if the config points to a file that doesn't exist. The active version shows in the footer (`Prompt: plan v1`) and is recorded with every call.
+To test a redesign, add a new version file (e.g. `prompts/plan_v3.md`) and change one line in the config. The build fails if the config points to a file that doesn't exist. The active version shows in the footer (`Prompt: plan v1`) and is recorded with every call.
 
 **Session log.** The footer's **Session log** panel lists every AI call in the current browser tab: timestamp, feature, prompt version, model, status, the inputs (never images) and the AI's raw output, including failures and responses that couldn't be parsed. **Download log as CSV** exports it for the test log. The log stays in `sessionStorage` and is never sent anywhere.
 

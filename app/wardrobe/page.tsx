@@ -38,7 +38,14 @@ const SORTS = {
 } as const;
 type Sort = keyof typeof SORTS;
 
-const plural = (t: ItemType) => (t === "dress" ? "Dresses" : t === "shoes" ? "Shoes" : t === "outerwear" ? "Outerwear" : `${t[0].toUpperCase()}${t.slice(1)}s`);
+const PLURAL: Record<ItemType, string> = {
+  top: "Tops",
+  bottom: "Bottoms",
+  dress: "Dresses",
+  outerwear: "Outerwear",
+  shoes: "Shoes",
+  accessory: "Accessories",
+};
 
 export default function WardrobePage() {
   const catalogue = useCatalogue();
@@ -124,8 +131,8 @@ export default function WardrobePage() {
 
       {/* ── Controls ── */}
       <section aria-label="Search and filters" className="space-y-5 border-y border-ink py-5">
-        <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_auto_auto_auto_auto] md:items-end">
-          <div>
+        <div className="grid grid-cols-2 gap-5 md:grid-cols-[minmax(0,1fr)_auto_auto_auto_auto] md:items-end">
+          <div className="col-span-2 md:col-span-1">
             <label htmlFor="search" className="care block text-graphite">
               Search
             </label>
@@ -199,7 +206,7 @@ export default function WardrobePage() {
                   on ? "border-ink bg-ink text-paper" : "border-hairline hover:border-ink"
                 }`}
               >
-                {t === "all" ? "All" : plural(t)}{" "}
+                {t === "all" ? "All" : PLURAL[t]}{" "}
                 <span className={`font-mono text-xs ${on ? "" : "text-graphite"}`}>
                   {t === "all" ? catalogue.length : counts[t]}
                 </span>

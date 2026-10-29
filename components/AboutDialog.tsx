@@ -61,6 +61,8 @@ export function AboutDialog() {
                   "Drafts tags (type, colour, formality, warmth, notes) from a photo of one garment.",
                   "Suggests up to three outfits from your catalogue for an occasion, temperature and dress code.",
                   "Shows how something you’re considering overlaps with what you own, with an estimate of new combinations.",
+                  "As Hem, Rewear’s AI stylist, refines a plan in conversation. Hem is an AI persona, not a person.",
+                  "Summarises trends from recent Australian fashion media (ELLE, marie claire and Who What Wear Australia), linking every trend to its source articles and suggesting ways to wear it with what you own.",
                 ]}
               />
             </Block>
@@ -71,6 +73,7 @@ export function AboutDialog() {
                   "Tell you to buy or not buy anything, or comment on price.",
                   "Give body-shape, size, fit or “flattering” advice.",
                   "Save anything on its own.",
+                  "Treat trends as advice to buy: there are no shopping links, and trends come only from the linked articles.",
                 ]}
               />
             </Block>
@@ -80,6 +83,8 @@ export function AboutDialog() {
                   "Unclear dress codes and high-stakes occasions get a “Your call” note saying what to check.",
                   "Every tag is a draft until you press Save. Fields you change are marked “edited”.",
                   "Purchase checks end with “This is information, not a recommendation. Your call.”",
+                  "The temperature is filled from a forecast but stays editable; if you type your own, yours is used. You choose the venue from search results.",
+                  "A venue only hints at formality. Your chosen dress code always wins, and a mismatch gets a “Your call” note.",
                 ]}
               />
             </Block>
@@ -95,6 +100,8 @@ export function AboutDialog() {
                 items={[
                   "Photos are never stored, on a server or in your browser. Your browser re-encodes each one (removing location data) and sends it once to the AI.",
                   "Items you add are kept in this browser only. There are no accounts and no database.",
+                  "Your approximate area comes from your internet connection (via Vercel) and is used only to fetch a forecast; it isn’t stored. “Use my current location” asks your browser first.",
+                  "Venue searches go to OpenStreetMap (Nominatim); forecast requests send coordinates to Open-Meteo. Both requests come from Rewear’s server, not your browser.",
                   "Text and photos you submit are sent to Google’s Gemini API to generate responses. On its free tier, Google may use submitted content to improve its services, so don’t upload anything private.",
                 ]}
               />
