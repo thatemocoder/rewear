@@ -6,8 +6,10 @@ import { AboutDialog } from "./AboutDialog";
 
 const NAV = [
   { href: "/", label: "Plan an outfit" },
+  { href: "/wardrobe", label: "Wardrobe" },
   { href: "/add", label: "Add items" },
   { href: "/buy", label: "Before you buy" },
+  { href: "/style", label: "In style" },
 ];
 
 export function SiteHeader() {

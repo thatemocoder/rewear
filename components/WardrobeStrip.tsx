@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { addedCount, exportCatalogueJson, isStorageAvailable, resetCatalogue } from "@/lib/catalogue";
+import { addedCount, exportCatalogueJson, isStorageAvailable, localChangeCount, resetCatalogue } from "@/lib/catalogue";
 import { ITEM_TYPES, type CatalogueItem } from "@/lib/schemas";
 import { SwingTag } from "./SwingTag";
 
@@ -17,6 +17,7 @@ export function WardrobeStrip({
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const added = mounted ? addedCount() : 0;
+  const changes = mounted ? localChangeCount() : 0;
   const storageOk = !mounted || isStorageAvailable();
 
   const sorted = [...catalogue].sort(
@@ -38,14 +39,14 @@ export function WardrobeStrip({
           <button type="button" className="btn-quiet" onClick={exportCatalogueJson}>
             Export catalogue (JSON)
           </button>
-          {added > 0 && (
+          {changes > 0 && (
             <button
               type="button"
               className="btn-quiet"
               onClick={() => {
                 if (
                   window.confirm(
-                    `Remove the ${added} item${added === 1 ? "" : "s"} you added and go back to the original catalogue? Export first if you want to keep them.`,
+                    `Undo your ${changes} change${changes === 1 ? "" : "s"} (added, edited or removed items) and go back to the original catalogue? Export first if you want to keep them.`,
                   )
                 )
                   resetCatalogue();

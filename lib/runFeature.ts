@@ -28,7 +28,7 @@ function nextPacificMidnight(now = new Date()): Date {
 export async function runFeature<T>(
   req: Request,
   feature: Feature,
-  build: (body: unknown) => BuiltInput,
+  build: (body: unknown) => BuiltInput | Promise<BuiltInput>,
   parse: (raw: string) => T | null,
 ): Promise<Response> {
   let body: unknown;
@@ -38,7 +38,7 @@ export async function runFeature<T>(
     return fail("bad_request", "The request couldn't be read.", 400);
   }
 
-  const input = build(body);
+  const input = await build(body);
   if ("error" in input) return fail("bad_request", input.error, 400);
 
   if (!isConfigured()) {

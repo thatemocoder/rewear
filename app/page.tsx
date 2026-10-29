@@ -1,13 +1,16 @@
 "use client";
 
-import { useMemo, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { AiLabel, YourCall } from "@/components/AiLabel";
 import { OutfitFlatLay } from "@/components/OutfitFlatLay";
+import { StylistNotes } from "@/components/StylistNotes";
 import { WardrobeStrip } from "@/components/WardrobeStrip";
+import { WhereWhen, type WhereWhenValue } from "@/components/WhereWhen";
 import { callAI } from "@/lib/api";
 import { useCatalogue } from "@/lib/catalogue";
+import { describeTime, distanceKm } from "@/lib/context";
 import { revealOnSmallScreens } from "@/lib/reveal";
-import { DRESS_CODES, type PlanResult } from "@/lib/schemas";
+import { DRESS_CODES, type PlanRequest, type PlanResult } from "@/lib/schemas";
 
 type State =
   | { status: "idle" }
@@ -22,6 +25,9 @@ export default function PlanPage() {
   const [dressCode, setDressCode] = useState("");
   const [notes, setNotes] = useState("");
   const [state, setState] = useState<State>({ status: "idle" });
+  const [ww, setWw] = useState<WhereWhenValue | null>(null);
+  const [tempSource, setTempSource] = useState<"forecast" | "manual">("forecast");
+  const [lastRequest, setLastRequest] = useState<PlanRequest | null>(null);
   const resultsRef = useRef<HTMLElement>(null);
 
   const byId = useMemo(() => new Map(catalogue.map((i) => [i.item_id, i])), [catalogue]);
@@ -42,23 +48,42 @@ export default function PlanPage() {
     );
   }, [state]);
 
+  // The forecast fills the temperature until the person types their own number.
+  const onWhereWhen = useCallback((v: WhereWhenValue) => setWw(v), []);
+  useEffect(() => {
+    if (tempSource === "forecast" && ww?.forecast) setTemp(String(ww.forecast.temperature_c));
+  }, [ww?.forecast, tempSource]);
+
   async function submit(e: FormEvent) {
     e.preventDefault();
     setState({ status: "loading" });
-    const body = {
+    const f = ww?.forecast;
+    const usingForecast = tempSource === "forecast" && !!f;
+    const km = ww?.venue && ww.place ? Math.round(distanceKm(ww.place, ww.venue)) : undefined;
+    const request: PlanRequest = {
       catalogue,
       occasion,
       temperature_c: Number(temp),
-      dress_code: dressCode,
+      dress_code: dressCode as PlanRequest["dress_code"],
       dress_code_notes: notes,
+      ...(f && { when: describeTime(f.time) }),
+      ...(ww?.place && { location: ww.place.label }),
+      ...(ww?.venue && { venue: { name: ww.venue.name, kind: ww.venue.kind, distance_km: km } }),
+      weather: usingForecast
+        ? { source: "forecast", feels_like_c: f.feels_like_c, rain_chance_pct: f.rain_chance_pct ?? undefined, conditions: f.conditions }
+        : { source: "typed" },
     };
-    const res = await callAI("plan", body, {
+    const res = await callAI("plan", request, {
       occasion,
       temperature_c: Number(temp),
+      temperature_source: usingForecast ? `forecast (${ww?.forecastFor})` : "typed by user",
       dress_code: dressCode,
       dress_code_notes: notes,
+      venue: ww?.venue ? `${ww.venue.name} (${ww.venue.kind})` : "",
+      when: f ? describeTime(f.time) : "",
       catalogue_ids: catalogue.map((i) => i.item_id).join(" "),
     });
+    setLastRequest(request);
     setState(res.ok ? { status: "done", result: res.data } : { status: "error", message: res.message });
     revealOnSmallScreens(resultsRef.current);
   }
@@ -88,6 +113,7 @@ export default function PlanPage() {
                 onChange={(e) => setOccasion(e.target.value)}
               />
             </div>
+            <WhereWhen onChange={onWhereWhen} />
             <div>
               <label htmlFor="temp" className="care block text-graphite">
                 Temperature (°C)
@@ -103,8 +129,28 @@ export default function PlanPage() {
                 step={1}
                 placeholder="18"
                 value={temp}
-                onChange={(e) => setTemp(e.target.value)}
+                aria-describedby="temp-source"
+                onChange={(e) => {
+                  setTemp(e.target.value);
+                  setTempSource("manual");
+                }}
               />
+              <p id="temp-source" className="mt-1 text-xs text-graphite">
+                {tempSource === "manual" ? (
+                  <>
+                    Your number will be used.{" "}
+                    {ww?.forecast && (
+                      <button type="button" className="btn-quiet" onClick={() => setTempSource("forecast")}>
+                        Use forecast ({ww.forecast.temperature_c}°)
+                      </button>
+                    )}
+                  </>
+                ) : ww?.forecast ? (
+                  "Filled from the forecast. Change it if you know better."
+                ) : (
+                  "Type the expected temperature."
+                )}
+              </p>
             </div>
             <div>
               <label htmlFor="dress" className="care block text-graphite">
@@ -181,6 +227,9 @@ export default function PlanPage() {
               ))}
               {state.result.outfits.length === 0 && !state.result.message && (
                 <p className="text-graphite">No outfits came back for this request.</p>
+              )}
+              {lastRequest && (
+                <StylistNotes key={JSON.stringify(state.result)} request={lastRequest} plan={state.result} catalogue={byId} />
               )}
             </div>
           )}

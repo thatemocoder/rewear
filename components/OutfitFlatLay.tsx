@@ -9,17 +9,22 @@ export function OutfitFlatLay({
   outfit,
   index,
   catalogue,
+  label,
+  idPrefix = "look",
 }: {
   outfit: Outfit;
   index: number;
   catalogue: Map<string, CatalogueItem>;
+  label?: string;
+  idPrefix?: string;
 }) {
+  const hid = `${idPrefix}-${index}`;
   return (
-    <article className="rise" style={{ animationDelay: `${index * 60}ms` }} aria-labelledby={`look-${index}`}>
+    <article className="rise" style={{ animationDelay: `${index * 60}ms` }} aria-labelledby={hid}>
       <header className="flex items-baseline justify-between border-t border-ink pt-2">
         <AiLabel />
-        <h3 id={`look-${index}`} className="care text-graphite">
-          Look {String(index + 1).padStart(2, "0")}
+        <h3 id={hid} className="care text-graphite">
+          {label ?? `Look ${String(index + 1).padStart(2, "0")}`}
         </h3>
       </header>
       <ul className="mt-5 grid grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-3 lg:grid-cols-4">

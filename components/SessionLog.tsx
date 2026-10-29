@@ -3,7 +3,13 @@
 import { useState } from "react";
 import { clearLog, downloadCsv, useSessionLog } from "@/lib/sessionLog";
 
-const FEATURE_NAME = { plan: "Plan an outfit", tag: "Add items", buy: "Before you buy" } as const;
+const FEATURE_NAME = {
+  plan: "Plan an outfit",
+  tag: "Add items",
+  buy: "Before you buy",
+  stylist: "Stylist (Hem)",
+  trends: "What’s in style",
+} as const;
 
 /** Every AI call in this browser tab, for the test log. Collapsible; never sent anywhere. */
 export function SessionLog() {

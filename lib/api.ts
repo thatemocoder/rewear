@@ -1,10 +1,10 @@
 // Client-side caller for the AI routes. Every call (success or failure) is written
 // to the session log here, so UI components don't have to remember to.
 import { PROMPT_CONFIG } from "./prompts.config";
-import type { ApiResponse, BuyResult, Feature, PlanResult, TagResult } from "./schemas";
+import type { ApiResponse, BuyResult, Feature, PlanResult, StylistResult, TagResult, TrendsResult } from "./schemas";
 import { logCall } from "./sessionLog";
 
-type ResultFor = { plan: PlanResult; tag: TagResult; buy: BuyResult };
+type ResultFor = { plan: PlanResult; tag: TagResult; buy: BuyResult; stylist: StylistResult; trends: TrendsResult };
 
 export async function callAI<F extends Feature>(
   feature: F,

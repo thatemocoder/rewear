@@ -1,5 +1,7 @@
 {
-  "plan": "v1",
+  "plan": "v2",
   "tag": "v1",
-  "buy": "v1"
+  "buy": "v1",
+  "stylist": "v1",
+  "trends": "v1"
 }

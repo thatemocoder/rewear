@@ -33,7 +33,7 @@ export const DRESS_CODES = [
 ] as const;
 export type DressCode = (typeof DRESS_CODES)[number];
 
-export type Feature = "plan" | "tag" | "buy";
+export type Feature = "plan" | "tag" | "buy" | "stylist" | "trends";
 
 export interface ImageInput {
   mimeType: string;
@@ -46,6 +46,29 @@ export interface ItemRef {
   description: string;
 }
 
+// ── Location, venue, weather (no AI) ─────────────────────────
+export interface Place {
+  label: string;
+  lat: number;
+  lon: number;
+  source: "ip" | "device";
+}
+export interface Venue {
+  name: string;
+  address: string;
+  kind: string; // e.g. "restaurant", "university", "hotel"
+  lat: number;
+  lon: number;
+}
+export interface Forecast {
+  temperature_c: number;
+  feels_like_c: number;
+  rain_chance_pct: number | null;
+  conditions: string;
+  time: string; // local ISO, e.g. 2026-10-29T15:00
+  timezone: string;
+}
+
 // ── Feature 2: plan ───────────────────────────────────────────
 export interface PlanRequest {
   catalogue: CatalogueItem[];
@@ -53,6 +76,11 @@ export interface PlanRequest {
   temperature_c: number;
   dress_code: DressCode;
   dress_code_notes: string;
+  /** Optional context (plan v2+). */
+  when?: string;
+  location?: string;
+  venue?: { name: string; kind: string; distance_km?: number };
+  weather?: { source: "forecast" | "typed"; feels_like_c?: number; rain_chance_pct?: number; conditions?: string };
 }
 export interface Outfit {
   items: ItemRef[];
@@ -81,6 +109,46 @@ export interface BuyResult {
   same_role: ItemRef[];
   new_combinations: number | null;
   estimate_explanation: string;
+}
+
+// ── Stylist (Hem) ─────────────────────────────────────────────
+export interface ChatTurn {
+  role: "person" | "hem";
+  text: string;
+}
+export interface StylistRequest {
+  catalogue: CatalogueItem[];
+  request: Omit<PlanRequest, "catalogue">;
+  plan: PlanResult;
+  conversation: ChatTurn[];
+}
+export interface StylistResult {
+  reply: string;
+  outfits: Outfit[];
+  your_call: string | null;
+}
+
+// ── What's in style ───────────────────────────────────────────
+export interface Article {
+  id: number;
+  source: string;
+  date: string; // YYYY-MM-DD
+  title: string;
+  summary: string;
+  url: string;
+}
+export interface Trend {
+  name: string;
+  summary: string;
+  brands: string[];
+  source_ids: number[];
+  with_your_wardrobe: string;
+  item_ids: string[];
+}
+export interface TrendsResult {
+  as_of: string;
+  trends: Trend[];
+  articles: Pick<Article, "id" | "source" | "title" | "url" | "date">[]; // added server-side, not by the AI
 }
 
 // ── API envelope ──────────────────────────────────────────────

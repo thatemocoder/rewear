@@ -3,7 +3,16 @@
 // returns null when the shape can't be read. It does NOT check item IDs against the
 // catalogue (that is a candidate Phase 2 redesign).
 
-import { ITEM_TYPES, type BuyResult, type ItemRef, type ItemType, type PlanResult, type TagResult } from "./schemas";
+import {
+  ITEM_TYPES,
+  type BuyResult,
+  type ItemRef,
+  type ItemType,
+  type PlanResult,
+  type StylistResult,
+  type TagResult,
+  type TrendsResult,
+} from "./schemas";
 
 /** Pull the first JSON object out of a model reply. */
 export function extractJson(raw: string): unknown {
@@ -84,4 +93,33 @@ export function parseBuy(raw: string): BuyResult | null {
     new_combinations: Number.isFinite(n) ? Math.max(0, Math.round(n)) : null,
     estimate_explanation: str(j.estimate_explanation),
   };
+}
+
+export function parseStylist(raw: string): StylistResult | null {
+  const j = extractJson(raw);
+  if (!isObj(j) || !str(j.reply)) return null;
+  const outfits = (Array.isArray(j.outfits) ? j.outfits : [])
+    .filter(isObj)
+    .map((o) => ({ items: itemRefs(o.items), reason: str(o.reason) }))
+    .filter((o) => o.items.length > 0);
+  return { reply: str(j.reply), outfits, your_call: strOrNull(j.your_call) };
+}
+
+/** Trends as the AI wrote them; the route attaches the article list afterwards. */
+export function parseTrends(raw: string): Omit<TrendsResult, "articles"> | null {
+  const j = extractJson(raw);
+  if (!isObj(j) || !Array.isArray(j.trends)) return null;
+  const strings = (v: unknown) => (Array.isArray(v) ? v.map(str).filter(Boolean) : []);
+  const trends = j.trends
+    .filter(isObj)
+    .map((t) => ({
+      name: str(t.name),
+      summary: str(t.summary),
+      brands: strings(t.brands),
+      source_ids: (Array.isArray(t.source_ids) ? t.source_ids : []).map(Number).filter(Number.isInteger),
+      with_your_wardrobe: str(t.with_your_wardrobe),
+      item_ids: strings(t.item_ids).map((s) => s.toUpperCase()),
+    }))
+    .filter((t) => t.name && t.summary);
+  return { as_of: str(j.as_of), trends };
 }
