@@ -37,7 +37,7 @@ export function SiteHeader() {
         </div>
         <nav
           aria-label="Main"
-          className="order-3 col-span-2 -mx-3 flex gap-x-1 overflow-x-auto border-t border-hairline py-1.5 text-base xl:order-2 xl:col-span-1 xl:mx-0 xl:border-t-0 xl:py-0"
+          className="order-3 col-span-2 -mx-3 flex flex-wrap gap-x-1 border-t border-hairline py-1.5 text-base xl:order-2 xl:col-span-1 xl:mx-0 xl:border-t-0 xl:py-0"
         >
           {NAV.map((n) => {
             const active = n.href === "/" ? path === "/" : path.startsWith(n.href);
@@ -46,7 +46,7 @@ export function SiteHeader() {
                 key={n.href}
                 href={n.href}
                 aria-current={active ? "page" : undefined}
-                className={`shrink-0 rounded-md px-3 py-2 whitespace-nowrap underline-offset-[10px] ${
+                className={`rounded-md px-3 py-2 whitespace-nowrap underline-offset-[10px] ${
                   active
                     ? "font-semibold text-ink underline decoration-2"
                     : "text-graphite decoration-transparent hover:bg-panel hover:text-ink"

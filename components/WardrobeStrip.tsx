@@ -1,11 +1,18 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { addedCount, exportCatalogueJson, isStorageAvailable, localChangeCount, resetCatalogue } from "@/lib/catalogue";
 import { ITEM_TYPES, type CatalogueItem } from "@/lib/schemas";
 import { SwingTag } from "./SwingTag";
 
-/** The viewer's wardrobe as a row of swing tags. Items referenced by results get an ink edge and a note. */
+/** Items shown before "Show all", to keep the page short. */
+const PREVIEW = 12;
+
+/**
+ * The viewer's wardrobe as a wrapping grid of swing tags (never scrolls sideways).
+ * Items referenced by results come first, with an ink edge and a note.
+ */
 export function WardrobeStrip({
   catalogue,
   marks = new Map(),
@@ -20,9 +27,16 @@ export function WardrobeStrip({
   const changes = mounted ? localChangeCount() : 0;
   const storageOk = !mounted || isStorageAvailable();
 
+  const [showAll, setShowAll] = useState(false);
+
   const sorted = [...catalogue].sort(
-    (a, b) => ITEM_TYPES.indexOf(a.type) - ITEM_TYPES.indexOf(b.type) || a.item_id.localeCompare(b.item_id),
+    (a, b) =>
+      Number(marks.has(b.item_id)) - Number(marks.has(a.item_id)) ||
+      ITEM_TYPES.indexOf(a.type) - ITEM_TYPES.indexOf(b.type) ||
+      a.item_id.localeCompare(b.item_id),
   );
+  const visible = showAll ? sorted : sorted.slice(0, PREVIEW);
+  const hidden = sorted.length - visible.length;
 
   return (
     <section aria-labelledby="wardrobe-h" className="border-t border-ink pt-4">
@@ -62,11 +76,11 @@ export function WardrobeStrip({
           This browser isn&apos;t saving data, so items you add will disappear when you leave. Export to keep them.
         </p>
       )}
-      <ul className="-mx-4 mt-4 flex snap-x gap-3 overflow-x-auto px-4 pt-1 pb-4 md:-mx-8 md:px-8 lg:-mx-12 lg:px-12">
-        {sorted.map((item) => {
+      <ul className="mt-4 grid grid-cols-2 gap-3 pt-1 sm:grid-cols-[repeat(auto-fill,minmax(9.5rem,1fr))]">
+        {visible.map((item) => {
           const mark = marks.get(item.item_id);
           return (
-            <li key={item.item_id} className="lift w-40 shrink-0 snap-start">
+            <li key={item.item_id} className="lift min-w-0">
               <SwingTag
                 item={item}
                 variant={mark ? "picked" : "default"}
@@ -76,6 +90,18 @@ export function WardrobeStrip({
           );
         })}
       </ul>
+      {(hidden > 0 || showAll) && (
+        <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+          {sorted.length > PREVIEW && (
+            <button type="button" className="btn-secondary py-1.5 text-sm" onClick={() => setShowAll((v) => !v)} aria-expanded={showAll}>
+              {showAll ? "Show fewer" : `Show all ${sorted.length} items`}
+            </button>
+          )}
+          <Link href="/wardrobe" className="btn-quiet">
+            Open Wardrobe
+          </Link>
+        </div>
+      )}
     </section>
   );
 }

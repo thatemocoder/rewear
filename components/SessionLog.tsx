@@ -79,7 +79,7 @@ export function SessionLog() {
                         </div>
                       ))}
                     </dl>
-                    <pre className="max-h-48 overflow-auto bg-card p-3 font-mono text-xs leading-relaxed whitespace-pre-wrap">
+                    <pre className="max-h-48 overflow-y-auto bg-card p-3 font-mono text-xs leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere]">
                       {e.output || "(empty)"}
                     </pre>
                   </div>

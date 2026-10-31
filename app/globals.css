@@ -29,6 +29,11 @@
   html {
     color-scheme: light;
   }
+  /* Never scroll sideways. "clip" (unlike "hidden") keeps position: sticky working. */
+  html,
+  body {
+    overflow-x: clip;
+  }
   body {
     color: var(--color-ink);
     font-family: var(--font-sans);
