@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { AiLabel } from "@/components/AiLabel";
+import { CheckNote } from "@/components/CheckNote";
 import { GarmentCard } from "@/components/GarmentCard";
 import { Icon } from "@/components/Icon";
 import { TrendArt } from "@/components/TrendArt";
@@ -18,7 +19,7 @@ type State =
   | { status: "idle" }
   | { status: "loading" }
   | { status: "error"; message: string }
-  | { status: "done"; result: TrendsResult; at: number };
+  | { status: "done"; result: TrendsResult; at: number; check?: { warnings?: string[]; retried?: boolean } };
 
 export default function StylePage() {
   const catalogue = useCatalogue();
@@ -41,7 +42,7 @@ export default function StylePage() {
     const res = await callAI("trends", { catalogue }, { catalogue_ids: catalogue.map((i) => i.item_id).join(" ") });
     if (!res.ok) return setState({ status: "error", message: res.message });
     const at = Date.now();
-    setState({ status: "done", result: res.data, at });
+    setState({ status: "done", result: res.data, at, check: { warnings: res.warnings, retried: res.retried } });
     try {
       window.localStorage.setItem(CACHE_KEY, JSON.stringify({ key: wardrobeKey, at, result: res.data }));
     } catch {
@@ -101,6 +102,11 @@ export default function StylePage() {
               </span>
             </div>
 
+            {state.check && (
+              <div className="mt-4">
+                <CheckNote {...state.check} />
+              </div>
+            )}
             {state.result.trends.length === 0 ? (
               <p className="mt-6 font-serif text-xl italic">No clear clothing trends in the latest articles.</p>
             ) : (

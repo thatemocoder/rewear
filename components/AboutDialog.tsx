@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, type ReactNode } from "react";
+import { APP_VERSION, V2_CHANGES } from "@/lib/version";
 import { Icon } from "./Icon";
 
 function Block({ title, children }: { title: string; children: ReactNode }) {
@@ -108,6 +109,9 @@ export function AboutDialog() {
                   "Text and photos you submit are sent to Google’s Gemini API to generate responses. On its free tier, Google may use submitted content to improve its services, so don’t upload anything private.",
                 ]}
               />
+            </Block>
+            <Block title={`What changed in ${APP_VERSION}`}>
+              <List items={V2_CHANGES} />
             </Block>
             <Block title="About this prototype">
               <p>

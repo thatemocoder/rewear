@@ -2,23 +2,30 @@
 
 import { useId } from "react";
 import { ITEM_TYPES, type ItemTags } from "@/lib/schemas";
-import { DotScale } from "./DotScale";
+import { CheckFlag, DotScale } from "./DotScale";
 
 /**
  * The AI's draft tags as an editable swing tag. Fields the person has changed
- * from the AI draft are marked "edited", so human corrections stay visible.
+ * from the AI draft are marked "edited", so human corrections stay visible. Fields the AI
+ * flagged as uncertain are marked "AI unsure · check" until the person edits them.
+ * In manual mode (the person tags it themselves) there is no AI label.
  */
 export function TagEditor({
   itemId,
   draft,
   value,
   onChange,
+  uncertain = [],
+  manual = false,
 }: {
   itemId: string;
   draft: ItemTags; // the AI's original suggestion
   value: ItemTags;
   onChange: (next: ItemTags) => void;
+  uncertain?: (keyof ItemTags)[];
+  manual?: boolean;
 }) {
+  const unsure = (k: keyof ItemTags) => !manual && uncertain.includes(k);
   const uid = useId();
   const set = <K extends keyof ItemTags>(k: K, v: ItemTags[K]) => onChange({ ...value, [k]: v });
   const edited = (k: keyof ItemTags) => value[k] !== draft[k];
@@ -26,12 +33,13 @@ export function TagEditor({
   const label = (k: keyof ItemTags, htmlFor: string, text: string) => (
     <label htmlFor={htmlFor} className="label flex items-center gap-2">
       {text}
-      {edited(k) && <span className="badge">edited</span>}
+      {!manual && edited(k) && <span className="badge">edited</span>}
+      {unsure(k) && !edited(k) && <CheckFlag />}
     </label>
   );
 
   return (
-    <div className="swing" data-variant="draft">
+    <div className="swing" data-variant={manual ? "default" : "draft"}>
       <div className="swing-body px-5 pt-9 pb-4 sm:px-6">
         <span className="swing-hole" aria-hidden />
         <div className="flex items-baseline justify-between gap-4">
@@ -82,19 +90,25 @@ export function TagEditor({
             name="formality"
             label="Formality"
             value={value.formality}
-            edited={edited("formality")}
+            edited={!manual && edited("formality")}
+            unsure={unsure("formality")}
             onChange={(n) => set("formality", n)}
           />
           <DotScale
             name="warmth"
             label="Warmth"
             value={value.warmth}
-            edited={edited("warmth")}
+            edited={!manual && edited("warmth")}
+            unsure={unsure("warmth")}
             onChange={(n) => set("warmth", n)}
           />
         </div>
 
-        <p className="care mt-6 border-t border-oxblood pt-2 font-medium text-oxblood">AI tags — check before saving</p>
+        {manual ? (
+          <p className="care mt-6 border-t border-hairline pt-2 text-graphite">Your tags · no AI involved</p>
+        ) : (
+          <p className="care mt-6 border-t border-oxblood pt-2 font-medium text-oxblood">AI tags — check before saving</p>
+        )}
       </div>
     </div>
   );

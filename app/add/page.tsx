@@ -20,7 +20,9 @@ import {
   isOpen,
   isReviewable,
   retryEntry,
+  retryWithHint,
   saveEntry,
+  tagManually,
   useTagQueue,
 } from "@/lib/tagQueue";
 
@@ -31,6 +33,8 @@ export default function AddPage() {
   const [lastSaved, setLastSaved] = useState<CatalogueItem | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [keepPhoto, setKeepPhoto] = useState(true);
+  const [hint, setHint] = useState("");
+  const [confirmDup, setConfirmDup] = useState<string | null>(null); // entry key whose duplicate warning was accepted
   useEffect(() => setKeepPhoto(getKeepPhotosPref()), []);
   const reviewRef = useRef<HTMLElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -68,10 +72,32 @@ export default function AddPage() {
     headingRef.current?.focus();
   }
 
+  // Possible duplicate already in the wardrobe: same type and the same colour + notes (case-insensitive).
+  const norm = (t: string) => t.trim().toLowerCase().replace(/s+/g, " ");
+  const similar =
+    active?.status === "draft" && active.value
+      ? catalogue.find(
+          (i) =>
+            i.type === active.value!.type &&
+            norm(i.colour) === norm(active.value!.colour) &&
+            norm(i.notes) === norm(active.value!.notes),
+        )
+      : undefined;
+
   function save(e: FormEvent) {
     e.preventDefault();
     if (!active) return;
+    if (similar && confirmDup !== active.key) return setConfirmDup(active.key);
     finish(() => setLastSaved(saveEntry(active.key, { keepPhoto })));
+    setConfirmDup(null);
+  }
+
+  function retry(e: FormEvent) {
+    e.preventDefault();
+    if (!active || !hint.trim()) return;
+    const key = active.key;
+    setHint("");
+    finish(() => retryWithHint(key, hint));
   }
 
   return (
@@ -169,15 +195,30 @@ export default function AddPage() {
 
                 {active.status === "draft" && active.draft && active.value && (
                   <form onSubmit={save} className="max-w-md">
-                    <div className="mb-4">
-                      <AiLabel>AI tags — check before saving</AiLabel>
-
+                    <div className="mb-4 space-y-1.5">
+                      {active.manual ? (
+                        <p className="label">Tag it yourself</p>
+                      ) : (
+                        <>
+                          <AiLabel>AI tags — check before saving</AiLabel>
+                          {!!active.uncertain?.length && (
+                            <p className="text-sm text-oxblood">
+                              AI is unsure about: <strong className="font-semibold">{active.uncertain.join(", ")}</strong>. Check
+                              {active.uncertain.length === 1 ? " it" : " them"} against the photo.
+                            </p>
+                          )}
+                          {active.note && <p className="text-sm text-graphite italic">{active.note}</p>}
+                          {active.hint && <p className="text-xs text-graphite">Your hint: “{active.hint}”</p>}
+                        </>
+                      )}
                     </div>
                     <TagEditor
                       itemId={nextItemId(active.value.type, catalogue)}
                       draft={active.draft}
                       value={active.value}
                       onChange={(v) => editEntry(active.key, v)}
+                      uncertain={active.uncertain}
+                      manual={active.manual}
                     />
                     <label className="mt-5 flex items-start gap-2 text-sm">
                       <input
@@ -194,9 +235,16 @@ export default function AddPage() {
                         <span className="block text-xs text-graphite">For outfit views · never uploaded</span>
                       </span>
                     </label>
+                    {similar && (
+                      <p className="mt-4 rounded-lg border border-hairline bg-card px-3 py-2 text-sm" role="status">
+                        Looks like <span className="font-mono">{similar.item_id}</span> ({similar.colour} {similar.notes}) is already in
+                        your wardrobe.{" "}
+                        {confirmDup === active.key ? "Press Save again to add it anyway." : "Change the tags, or Save to check again."}
+                      </p>
+                    )}
                     <div className="mt-5 flex flex-wrap items-center gap-5">
                       <button type="submit" className="btn">
-                        Save to wardrobe
+                        {similar && confirmDup === active.key ? "Save anyway" : "Save to wardrobe"}
                       </button>
                       <button type="button" className="btn-quiet" onClick={() => finish(() => discardEntry(active.key))}>
                         Discard
@@ -209,19 +257,47 @@ export default function AddPage() {
                   <div className="border-t border-ink pt-2">
                     <AiLabel>AI response · no tags drafted</AiLabel>
                     <p className="mt-3 max-w-prose font-serif text-xl leading-snug italic">{active.reason}</p>
-                    <button type="button" className="btn-quiet mt-5" onClick={() => finish(() => discardEntry(active.key))}>
-                      Remove from queue
-                    </button>
+
+                    {/* Human override: point the AI at the right item, or tag it without AI. */}
+                    <form onSubmit={retry} className="mt-5 max-w-md">
+                      <label htmlFor="hint" className="label">
+                        Is it one item? Say which <span className="opt">(e.g. “the black heels”, “earring set”)</span>
+                      </label>
+                      <div className="mt-1 flex items-end gap-3">
+                        <input
+                          id="hint"
+                          className="field"
+                          maxLength={80}
+                          value={hint}
+                          onChange={(e) => setHint(e.target.value)}
+                          placeholder="the dress"
+                        />
+                        <button type="submit" className="btn-secondary shrink-0 py-2 text-sm" disabled={!hint.trim()}>
+                          <Icon name="refresh" className="size-3.5" /> Try again
+                        </button>
+                      </div>
+                    </form>
+                    <div className="mt-4 flex flex-wrap gap-5 text-sm">
+                      <button type="button" className="btn-quiet" onClick={() => tagManually(active.key)}>
+                        Tag it myself (no AI)
+                      </button>
+                      <button type="button" className="btn-quiet" onClick={() => finish(() => discardEntry(active.key))}>
+                        Remove from queue
+                      </button>
+                    </div>
                   </div>
                 )}
 
                 {active.status === "error" && (
                   <div className="border-t border-ink pt-4" role="alert">
-                    <p className="care text-graphite">Something went wrong</p>
+                    <p className="text-sm font-semibold">Something went wrong</p>
                     <p className="mt-1 max-w-prose">{active.message}</p>
-                    <div className="mt-5 flex gap-5">
+                    <div className="mt-5 flex flex-wrap items-center gap-5">
                       <button type="button" className="btn" onClick={() => finish(() => retryEntry(active.key))}>
                         Try again
+                      </button>
+                      <button type="button" className="btn-quiet" onClick={() => tagManually(active.key)}>
+                        Tag it myself (no AI)
                       </button>
                       <button type="button" className="btn-quiet" onClick={() => finish(() => discardEntry(active.key))}>
                         Remove

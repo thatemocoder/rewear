@@ -96,7 +96,16 @@ export interface PlanResult {
 export interface TagRequest {
   image: ImageInput;
 }
-export type TagResult = { ok: true; tags: ItemTags } | { ok: false; reason: string };
+export type TagResult =
+  | {
+      ok: true;
+      tags: ItemTags;
+      /** Fields the AI says it is unsure about (tag v2+); shown to the person as "check this". */
+      uncertain: (keyof ItemTags)[];
+      /** How the AI read the photo, e.g. "Tagged the dress worn by the model." */
+      note: string | null;
+    }
+  | { ok: false; reason: string };
 
 // ── Feature 3: buy ────────────────────────────────────────────
 export interface BuyRequest {
@@ -162,7 +171,17 @@ export type ApiErrorCode =
   | "not_configured";
 
 export type ApiResponse<T> =
-  | { ok: true; data: T; raw: string; promptVersion: string; model: string }
+  | {
+      ok: true;
+      data: T;
+      raw: string;
+      promptVersion: string;
+      model: string;
+      /** Rewear's post-check asked the AI again (e.g. it used an unknown item ID). */
+      retried?: boolean;
+      /** Problems still present after the retry; shown to the person. */
+      warnings?: string[];
+    }
   | {
       ok: false;
       error: ApiErrorCode;

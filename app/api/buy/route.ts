@@ -1,8 +1,10 @@
 import { parseBuy } from "@/lib/parse";
 import { runFeature } from "@/lib/runFeature";
-import { clip, sanitizeCatalogue, sanitizeImage } from "@/lib/validate";
+import type { CatalogueItem } from "@/lib/schemas";
+import { clip, idProblem, sanitizeCatalogue, sanitizeImage, unknownIds } from "@/lib/validate";
 
 export async function POST(req: Request) {
+  let items: CatalogueItem[] = [];
   return runFeature(
     req,
     "buy",
@@ -11,6 +13,7 @@ export async function POST(req: Request) {
       const catalogue = sanitizeCatalogue(b.catalogue);
       const considering = clip(b.considering, 300);
       if (!catalogue) return { error: "Your wardrobe is empty, so there's nothing to compare against." };
+      items = catalogue;
       if (!considering) return { error: "Describe the item you're considering." };
 
       const image = b.image ? sanitizeImage(b.image) : undefined;
@@ -19,5 +22,6 @@ export async function POST(req: Request) {
       return { text: JSON.stringify({ catalogue, considering }, null, 2), image };
     },
     parseBuy,
+    (r) => idProblem(unknownIds(r.same_role.map((i) => i.item_id), items)),
   );
 }

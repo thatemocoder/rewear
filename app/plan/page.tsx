@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } fro
 import { AiLabel, YourCall } from "@/components/AiLabel";
 import { OutfitFlatLay } from "@/components/OutfitFlatLay";
 import { HemIdle, StylistNotes } from "@/components/StylistNotes";
+import { CheckNote } from "@/components/CheckNote";
 import { EmptyRail } from "@/components/EmptyRail";
 import { Icon } from "@/components/Icon";
 import { WardrobeStrip } from "@/components/WardrobeStrip";
@@ -18,7 +19,7 @@ type State =
   | { status: "idle" }
   | { status: "loading" }
   | { status: "error"; message: string }
-  | { status: "done"; result: PlanResult };
+  | { status: "done"; result: PlanResult; check?: { warnings?: string[]; retried?: boolean } };
 
 export default function PlanPage() {
   const catalogue = useCatalogue();
@@ -86,7 +87,11 @@ export default function PlanPage() {
       catalogue_ids: catalogue.map((i) => i.item_id).join(" "),
     });
     setLastRequest(request);
-    setState(res.ok ? { status: "done", result: res.data } : { status: "error", message: res.message });
+    setState(
+      res.ok
+        ? { status: "done", result: res.data, check: { warnings: res.warnings, retried: res.retried } }
+        : { status: "error", message: res.message },
+    );
     revealOnSmallScreens(resultsRef.current);
   }
 
@@ -237,6 +242,7 @@ export default function PlanPage() {
           )}
           {state.status === "done" && (
             <div className="space-y-8">
+              <CheckNote {...state.check} />
               {state.result.your_call && <YourCall>{state.result.your_call}</YourCall>}
               {state.result.message && (
                 <div className="rise border-t border-ink pt-2">

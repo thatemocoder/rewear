@@ -4,6 +4,7 @@ import { useRef, useState, type FormEvent } from "react";
 import { callAI } from "@/lib/api";
 import type { CatalogueItem, ChatTurn, Outfit, PlanRequest, PlanResult } from "@/lib/schemas";
 import { YourCall } from "./AiLabel";
+import { CheckNote } from "./CheckNote";
 import { HemAvatar } from "./HemAvatar";
 import { OutfitFlatLay } from "./OutfitFlatLay";
 
@@ -12,6 +13,7 @@ interface Turn {
   text: string;
   outfits?: Outfit[];
   your_call?: string | null;
+  check?: { warnings?: string[]; retried?: boolean };
 }
 
 const QUICK = ["Something warmer", "A bit more formal", "Different shoes", "Fewer layers", "Why the first look?"];
@@ -61,7 +63,16 @@ export function StylistNotes({
     );
     setBusy(false);
     if (res.ok) {
-      setTurns([...next, { role: "hem", text: res.data.reply, outfits: res.data.outfits, your_call: res.data.your_call }]);
+      setTurns([
+        ...next,
+        {
+          role: "hem",
+          text: res.data.reply,
+          outfits: res.data.outfits,
+          your_call: res.data.your_call,
+          check: { warnings: res.warnings, retried: res.retried },
+        },
+      ]);
     } else {
       setError(res.message);
     }
@@ -105,6 +116,7 @@ export function StylistNotes({
               )}
               <div className="min-w-0 space-y-5">
                 <p className={t.role === "hem" ? "max-w-prose font-serif text-lg leading-snug @2xl:text-xl" : "max-w-prose"}>{t.text}</p>
+                {t.check && <CheckNote {...t.check} />}
                 {t.your_call && <YourCall>{t.your_call}</YourCall>}
                 {t.outfits?.map((o, j) => (
                   <OutfitFlatLay

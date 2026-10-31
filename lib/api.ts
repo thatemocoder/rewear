@@ -33,7 +33,7 @@ export async function callAI<F extends Feature>(
     feature,
     promptVersion: res.promptVersion ?? PROMPT_CONFIG[feature],
     model: res.model ?? "",
-    status: res.ok ? "ok" : res.error,
+    status: res.ok ? (res.warnings?.length ? "ok · ID warning" : res.retried ? "ok · ID check retried" : "ok") : res.error,
     inputs: logInputs,
     output: res.raw ?? (res.ok ? "" : res.message),
   });

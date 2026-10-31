@@ -2,7 +2,7 @@
 
 **Plan outfits from clothes you already own, and think twice before buying more.**
 
-Live: **https://rewear-henna.vercel.app** (no login)
+Live (no login): **v2 https://rewear-v2.vercel.app** · v1 (before redesign) https://rewear-henna.vercel.app. See [CHANGELOG.md](CHANGELOG.md).
 
 Rewear is a small AI-assisted outfit planner. It is a prototype for UNSW INFS5706 *AI in Action*, where the brief is to design and test a clear boundary between what the AI does and what the human keeps.
 
@@ -58,10 +58,10 @@ Browser (components/, app/*/page.tsx)
 
 ## Evidence features
 
-**Versioned prompts.** Each feature's system prompt is its own file in `prompts/`: `plan_v1.md`, `plan_v2.md` (adds venue, time and forecast context), `stylist_v1.md` (Hem's persona and rules), `tag_v1.md`, `buy_v1.md` and `trends_v1.md`. The active version is set in `prompts/config.json`:
+**Versioned prompts.** Each feature's system prompt is its own file in `prompts/`: `plan_v1.md`, `plan_v2.md` (adds venue, time and forecast context), `stylist_v1.md` (Hem's persona and rules), `tag_v1.md`, `tag_v2.md` (redesign after stress testing: pairs/sets, background clutter, model photos, dress vs skirt, uncertainty flags), `buy_v1.md` and `trends_v1.md`. The active version is set in `prompts/config.json`:
 
 ```json
-{ "plan": "v2", "tag": "v1", "buy": "v1", "stylist": "v1", "trends": "v1" }
+{ "plan": "v2", "tag": "v2", "buy": "v1", "stylist": "v1", "trends": "v1" }
 ```
 
 To test a redesign, add a new version file (e.g. `prompts/plan_v3.md`) and change one line in the config. The build fails if the config points to a file that doesn't exist. The active version shows in the footer (`Prompt: plan v1`) and is recorded with every call.

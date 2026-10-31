@@ -26,6 +26,25 @@ export interface QueueEntry {
   reason?: string; // AI said it's not a single garment
   message?: string; // error text
   savedId?: string;
+  uncertain?: (keyof ItemTags)[]; // fields the AI flagged as unsure (tag v2+)
+  note?: string | null; // how the AI read the photo
+  hint?: string; // the person's pointer, e.g. "the black heels"
+  manual?: boolean; // tagged by the person without AI
+  hash?: string; // fingerprint of the re-encoded photo, to catch duplicates
+  allowDuplicate?: boolean;
+}
+
+const BLANK: ItemTags = { type: "top", colour: "", formality: 3, warmth: 2, notes: "" };
+
+/** Cheap fingerprint of the re-encoded image data (FNV-1a over a sample). */
+function fingerprint(data: string): string {
+  let h = 0x811c9dc5;
+  const step = Math.max(1, Math.floor(data.length / 4096));
+  for (let i = 0; i < data.length; i += step) {
+    h ^= data.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return `${data.length.toString(36)}-${h.toString(36)}`;
 }
 
 /** Needs the person's attention. */
@@ -103,13 +122,32 @@ async function processEntry(key: string) {
       image = { mimeType: prepared.mimeType, data: prepared.data };
       images.set(key, image);
       files.delete(key); // the original file (with its metadata) is no longer needed
-      update(key, { preview: prepared.previewUrl });
+      update(key, { preview: prepared.previewUrl, hash: fingerprint(prepared.data) });
     } catch (err) {
       return update(key, { status: "error", message: (err as Error).message || "That photo couldn't be read." });
     }
   }
 
-  const res = await callAI("tag", { image }, { photo: "attached (not stored or logged)" });
+  // Same photo already in this session's queue: don't spend an AI call on it.
+  // Only photos queued earlier count, so the first copy is always the one that gets tagged.
+  const myIndex = entries.findIndex((e) => e.key === key);
+  const me = entries[myIndex];
+  const twin =
+    me.hash && !me.allowDuplicate && entries.slice(0, myIndex).find((e) => e.hash === me.hash && e.status !== "discarded");
+  if (twin) {
+    return update(key, {
+      status: "error",
+      message: `Same photo as “${twin.name}”${twin.savedId ? `, already saved as ${twin.savedId}` : ""}. Remove it, or try again if it's a different item.`,
+      allowDuplicate: true, // a deliberate retry goes through
+    });
+  }
+
+  const hint = me.hint?.trim() || undefined;
+  const res = await callAI(
+    "tag",
+    { image, ...(hint && { hint }) },
+    { photo: "attached (not stored or logged)", ...(hint && { hint }) },
+  );
 
   // Gemini's per-minute limit: wait as long as it asks, then retry this photo (a few times at most).
   const tries = (waits.get(key) ?? 0) + 1;
@@ -134,7 +172,15 @@ async function processEntry(key: string) {
 
   if (!res.ok) update(key, { status: "error", message: res.message });
   else if (!res.data.ok) update(key, { status: "rejected", reason: res.data.reason });
-  else update(key, { status: "draft", draft: res.data.tags, value: res.data.tags });
+  else
+    update(key, {
+      status: "draft",
+      draft: res.data.tags,
+      value: res.data.tags,
+      uncertain: res.data.uncertain,
+      note: res.data.note,
+      manual: false,
+    });
 }
 
 export function editEntry(key: string, value: ItemTags) {
@@ -164,6 +210,18 @@ export function retryEntry(key: string) {
   if (!files.has(key) && !images.has(key)) return;
   update(key, { status: "queued" });
   void pump();
+}
+
+/** After a rejection: ask the AI again, pointing at the item the person means. */
+export function retryWithHint(key: string, hint: string) {
+  if (!files.has(key) && !images.has(key)) return;
+  update(key, { status: "queued", hint: hint.trim().slice(0, 80), reason: undefined });
+  void pump();
+}
+
+/** The person tags the photo themselves; no AI call. */
+export function tagManually(key: string) {
+  update(key, { status: "draft", draft: { ...BLANK }, value: { ...BLANK }, uncertain: [], note: null, manual: true });
 }
 
 /** Removes saved and discarded rows from the list. */

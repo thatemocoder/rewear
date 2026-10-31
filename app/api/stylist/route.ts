@@ -1,10 +1,12 @@
 import { parsePlan, parseStylist } from "@/lib/parse";
 import { runFeature } from "@/lib/runFeature";
-import { clip, sanitizeCatalogue, sanitizePlanContext } from "@/lib/validate";
+import type { CatalogueItem } from "@/lib/schemas";
+import { clip, idProblem, sanitizeCatalogue, sanitizePlanContext, unknownIds } from "@/lib/validate";
 
 const MAX_TURNS = 16;
 
 export async function POST(req: Request) {
+  let items: CatalogueItem[] = [];
   return runFeature(
     req,
     "stylist",
@@ -12,6 +14,7 @@ export async function POST(req: Request) {
       const b = (body ?? {}) as Record<string, unknown>;
       const catalogue = sanitizeCatalogue(b.catalogue);
       if (!catalogue) return { error: "Your wardrobe is empty." };
+      items = catalogue;
       const ctx = sanitizePlanContext(b.request);
       if ("error" in ctx) return { error: "Plan an outfit first, then talk it through." };
       // Re-read the earlier plan through the same parser so only its known shape reaches the prompt.
@@ -30,5 +33,6 @@ export async function POST(req: Request) {
       return { text: JSON.stringify({ catalogue, request: ctx.context, plan, conversation }, null, 2) };
     },
     parseStylist,
+    (r) => idProblem(unknownIds(r.outfits.flatMap((o) => o.items.map((i) => i.item_id)), items)),
   );
 }

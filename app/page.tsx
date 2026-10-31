@@ -7,6 +7,7 @@ import { useCurtain } from "@/components/Curtain";
 import { GarmentArt } from "@/components/GarmentArt";
 import { Icon, type IconName } from "@/components/Icon";
 import type { ItemType } from "@/lib/schemas";
+import { APP_VERSION } from "@/lib/version";
 
 // The flat-lay: pieces drift in one by one, then float. Positions are % of the stage.
 const PIECES: { type: ItemType; notes: string; colour: string; left: number; top: number; w: number; r: number; d: number }[] = [
@@ -144,7 +145,7 @@ export default function Cover() {
       </section>
 
       <footer className="flex flex-wrap items-center justify-between gap-2 px-4 pb-5 text-xs text-graphite md:px-8 lg:px-12">
-        <span>Student prototype · UNSW INFS5706 · Built with AI assistance</span>
+        <span>Rewear {APP_VERSION} · Student prototype · UNSW INFS5706 · Built with AI assistance</span>
         <span className="font-mono text-[11px]">No account needed · photos never stored on a server</span>
       </footer>
     </div>

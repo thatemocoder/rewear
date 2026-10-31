@@ -71,15 +71,24 @@ export function parseTag(raw: string): TagResult | null {
   if (!isObj(j.tags)) return null;
   const t = j.tags;
   const type = str(t.type).toLowerCase();
+  const typeOk = (ITEM_TYPES as readonly string[]).includes(type);
+  const FIELDS = ["type", "colour", "formality", "warmth", "notes"] as const;
+  const uncertain = (Array.isArray(j.uncertain) ? j.uncertain : [])
+    .map((f) => str(f).toLowerCase())
+    .filter((f): f is (typeof FIELDS)[number] => (FIELDS as readonly string[]).includes(f));
+  // An unrecognised type is never silently replaced: default it, but flag it for the person to check.
+  if (!typeOk && !uncertain.includes("type")) uncertain.push("type");
   return {
     ok: true,
     tags: {
-      type: (ITEM_TYPES as readonly string[]).includes(type) ? (type as ItemType) : "top",
+      type: typeOk ? (type as ItemType) : "top",
       colour: str(t.colour),
       formality: scale(t.formality),
       warmth: scale(t.warmth),
       notes: str(t.notes),
     },
+    uncertain,
+    note: strOrNull(j.note),
   };
 }
 

@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { PROMPT_CONFIG } from "@/lib/prompts.config";
 import type { Feature } from "@/lib/schemas";
+import { APP_VERSION } from "@/lib/version";
 import { SessionLog } from "./SessionLog";
 
 // The prompts each page uses (the Wardrobe page uses none).
@@ -22,7 +23,7 @@ export function SiteFooter() {
           <span className="font-mono text-[11px]">
             {features.length ? `Prompt: ${features.map((f) => `${f} ${PROMPT_CONFIG[f]}`).join(" · ")}` : "No AI on this page"}
           </span>
-          <span>Student prototype · UNSW INFS5706 · Built with AI assistance</span>
+          <span>Rewear {APP_VERSION} · Student prototype · UNSW INFS5706 · Built with AI assistance</span>
         </div>
         <div className="mt-2">
           <SessionLog />

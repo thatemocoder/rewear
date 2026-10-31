@@ -4,6 +4,7 @@ import { useMemo, useRef, useState, type FormEvent } from "react";
 import { AiLabel } from "@/components/AiLabel";
 import { Icon } from "@/components/Icon";
 import { PhotoDrop } from "@/components/PhotoDrop";
+import { CheckNote } from "@/components/CheckNote";
 import { EmptyCompare } from "@/components/EmptyCompare";
 import { GarmentCard } from "@/components/GarmentCard";
 import { WardrobeStrip } from "@/components/WardrobeStrip";
@@ -18,7 +19,7 @@ type State =
   | { status: "idle" }
   | { status: "loading" }
   | { status: "error"; message: string }
-  | { status: "done"; result: BuyResult };
+  | { status: "done"; result: BuyResult; check?: { warnings?: string[]; retried?: boolean } };
 
 export default function BuyPage() {
   const catalogue = useCatalogue();
@@ -59,7 +60,11 @@ export default function BuyPage() {
       photo: photo ? "attached (not stored or logged)" : "none",
       catalogue_ids: catalogue.map((i) => i.item_id).join(" "),
     });
-    setState(res.ok ? { status: "done", result: res.data } : { status: "error", message: res.message });
+    setState(
+      res.ok
+        ? { status: "done", result: res.data, check: { warnings: res.warnings, retried: res.retried } }
+        : { status: "error", message: res.message },
+    );
     revealOnSmallScreens(resultsRef.current);
   }
 
@@ -128,7 +133,8 @@ export default function BuyPage() {
             </div>
           )}
           {state.status === "done" && (
-            <div className="rise">
+            <div className="rise space-y-4">
+              <CheckNote {...state.check} />
               <header className="flex items-baseline justify-between gap-4 border-t border-ink pt-2">
                 <AiLabel />
                 {state.result.considered_item && (

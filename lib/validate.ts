@@ -83,3 +83,10 @@ export function sanitizePlanContext(v: unknown): { context: Omit<PlanRequest, "c
   }
   return { context };
 }
+
+/** Item IDs the AI referenced that are not in the catalogue (deduplicated). */
+export function unknownIds(ids: string[], catalogue: CatalogueItem[]): string[] {
+  const known = new Set(catalogue.map((i) => i.item_id));
+  return [...new Set(ids.filter((id) => !known.has(id)))];
+}
+export const idProblem = (ids: string[]) => (ids.length ? [`Unknown item_id ${ids.join(", ")} (not in the catalogue).`] : []);

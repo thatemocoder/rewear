@@ -13,12 +13,14 @@ export function DotScale({
   label,
   value,
   edited,
+  unsure = false,
   onChange,
 }: {
   name: "formality" | "warmth";
   label: string;
   value: number;
   edited: boolean;
+  unsure?: boolean; // the AI flagged this field as uncertain
   onChange: (n: number) => void;
 }) {
   const uid = useId();
@@ -27,6 +29,7 @@ export function DotScale({
       <legend className="label flex items-center gap-2">
         {label}
         {edited && <span className="badge">edited</span>}
+        {unsure && !edited && <CheckFlag />}
       </legend>
       <div className="mt-1.5 flex items-center gap-1">
         {[1, 2, 3, 4, 5].map((n) => (
@@ -56,5 +59,14 @@ export function DotScale({
         <span>{SCALE_ENDS[name][1]}</span>
       </p>
     </fieldset>
+  );
+}
+
+/** Marks a field the AI said it was unsure about. Oxblood because it is AI-produced information. */
+export function CheckFlag() {
+  return (
+    <span className="care inline-flex items-center gap-1 rounded-full border border-oxblood/50 px-1.5 py-px text-[10px] font-medium text-oxblood">
+      AI unsure · check
+    </span>
   );
 }

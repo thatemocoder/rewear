@@ -30,6 +30,8 @@ export async function runFeature<T>(
   feature: Feature,
   build: (body: unknown) => BuiltInput | Promise<BuiltInput>,
   parse: (raw: string) => T | null,
+  /** Optional post-check (e.g. item IDs exist). Problems trigger one corrective retry, then a visible warning. */
+  check?: (data: T) => string[],
 ): Promise<Response> {
   let body: unknown;
   try {
@@ -89,7 +91,25 @@ export async function runFeature<T>(
     return fail("ai_error", "The AI service didn't respond. Please try again.", 502, { promptVersion: prompt.version, model: GEMINI_MODEL });
   }
 
-  const data = parse(raw);
+  let data = parse(raw);
+  let warnings: string[] = [];
+  let retried = false;
+  const firstProblems = data !== null && check ? check(data) : [];
+  if (firstProblems.length) {
+    retried = true;
+    try {
+      const correction = `\n\nCORRECTION from Rewear: your previous answer had problems: ${firstProblems.join(" ")} Answer again using only item_ids that appear in the catalogue above.`;
+      const raw2 = await generate({ system: prompt.text, ...input, text: input.text + correction });
+      const data2 = parse(raw2);
+      raw = `${raw}\n\n--- retry after Rewear's ID check (${firstProblems.join(" ")}) ---\n${raw2}`;
+      if (data2 !== null) {
+        data = data2;
+        warnings = check!(data2);
+      } else warnings = firstProblems;
+    } catch {
+      warnings = firstProblems; // keep the first answer, flagged
+    }
+  }
   if (data === null) {
     return fail("parse_failed", "Couldn't read the AI's response. The raw output is in the session log.", 502, {
       raw,
@@ -98,5 +118,8 @@ export async function runFeature<T>(
     });
   }
 
-  return reply<T>({ ok: true, data, raw, promptVersion: prompt.version, model: GEMINI_MODEL }, 200);
+  return reply<T>(
+    { ok: true, data, raw, promptVersion: prompt.version, model: GEMINI_MODEL, ...(retried && { retried }), ...(warnings.length && { warnings }) },
+    200,
+  );
 }

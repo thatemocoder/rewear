@@ -12,7 +12,7 @@ export async function prepareImage(file: File): Promise<ImageInput & { previewUr
   try {
     bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
   } catch {
-    throw new Error("This browser can’t read that image format. Try a JPEG or PNG.");
+    throw new Error("This browser can’t read that image format (iPhone HEIC photos often can’t be read). Try a JPEG or PNG, or a screenshot of the photo.");
   }
   const ratio = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height));
   const canvas = document.createElement("canvas");
