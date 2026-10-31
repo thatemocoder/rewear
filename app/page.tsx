@@ -92,7 +92,7 @@ export default function PlanPage() {
 
   return (
     <div className="space-y-10">
-      <div className="grid gap-10 md:grid-cols-[20rem_minmax(0,1fr)] xl:grid-cols-[18rem_minmax(0,1fr)_22rem] xl:gap-8 2xl:grid-cols-[20rem_minmax(0,1fr)_26rem] 2xl:gap-10">
+      <div className="grid gap-10 md:grid-cols-[22rem_minmax(0,1fr)] xl:grid-cols-[22rem_minmax(0,1fr)_21rem] xl:gap-8 2xl:grid-cols-[24rem_minmax(0,1fr)_26rem] 2xl:gap-10">
         {/* ── Brief (stays in view while results scroll) ── */}
         <section
           aria-labelledby="plan-h"
