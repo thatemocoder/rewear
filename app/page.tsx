@@ -1,277 +1,152 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { AiLabel, YourCall } from "@/components/AiLabel";
-import { OutfitFlatLay } from "@/components/OutfitFlatLay";
-import { HemIdle, StylistNotes } from "@/components/StylistNotes";
-import { EmptyRail } from "@/components/EmptyRail";
-import { Icon } from "@/components/Icon";
-import { WardrobeStrip } from "@/components/WardrobeStrip";
-import { WhereWhen, type WhereWhenValue } from "@/components/WhereWhen";
-import { callAI } from "@/lib/api";
-import { useCatalogue } from "@/lib/catalogue";
-import { describeTime, distanceKm } from "@/lib/context";
-import { revealOnSmallScreens } from "@/lib/reveal";
-import { DRESS_CODES, type PlanRequest, type PlanResult } from "@/lib/schemas";
+import Link from "next/link";
+import type { CSSProperties, MouseEvent } from "react";
+import { AboutDialog } from "@/components/AboutDialog";
+import { useCurtain } from "@/components/Curtain";
+import { GarmentArt } from "@/components/GarmentArt";
+import { Icon, type IconName } from "@/components/Icon";
+import type { ItemType } from "@/lib/schemas";
 
-type State =
-  | { status: "idle" }
-  | { status: "loading" }
-  | { status: "error"; message: string }
-  | { status: "done"; result: PlanResult };
+// The flat-lay: pieces drift in one by one, then float. Positions are % of the stage.
+const PIECES: { type: ItemType; notes: string; colour: string; left: number; top: number; w: number; r: number; d: number }[] = [
+  { type: "outerwear", notes: "wool overcoat", colour: "camel", left: 3, top: 10, w: 29, r: -8, d: 150 },
+  { type: "top", notes: "chunky knit", colour: "oat", left: 35, top: 1, w: 27, r: 5, d: 300 },
+  { type: "bottom", notes: "straight jeans", colour: "indigo denim", left: 66, top: 13, w: 27, r: 9, d: 450 },
+  { type: "shoes", notes: "chelsea boots", colour: "brown", left: 9, top: 56, w: 26, r: 4, d: 600 },
+  { type: "dress", notes: "slip dress", colour: "sage", left: 39, top: 50, w: 27, r: -6, d: 750 },
+  { type: "accessory", notes: "leather tote bag", colour: "tan", left: 70, top: 60, w: 22, r: 7, d: 900 },
+];
 
-export default function PlanPage() {
-  const catalogue = useCatalogue();
-  const [occasion, setOccasion] = useState("");
-  const [temp, setTemp] = useState("");
-  const [dressCode, setDressCode] = useState("");
-  const [notes, setNotes] = useState("");
-  const [state, setState] = useState<State>({ status: "idle" });
-  const [ww, setWw] = useState<WhereWhenValue | null>(null);
-  const [tempSource, setTempSource] = useState<"forecast" | "manual">("forecast");
-  const [lastRequest, setLastRequest] = useState<PlanRequest | null>(null);
-  const resultsRef = useRef<HTMLElement>(null);
+const STEPS: { icon: IconName; text: string }[] = [
+  { icon: "camera", text: "Snap what you own" },
+  { icon: "hanger", text: "Pull looks from it" },
+  { icon: "check", text: "Your call, always" },
+];
 
-  const byId = useMemo(() => new Map(catalogue.map((i) => [i.item_id, i])), [catalogue]);
+export default function Cover() {
+  const { go } = useCurtain();
 
-  // item_id → "In look 01, 02" for the wardrobe strip
-  const marks = useMemo(() => {
-    const looks = new Map<string, number[]>();
-    if (state.status === "done") {
-      state.result.outfits.forEach((o, i) =>
-        o.items.forEach(({ item_id }) => {
-          const l = looks.get(item_id) ?? [];
-          if (!l.includes(i + 1)) looks.set(item_id, [...l, i + 1]);
-        }),
-      );
-    }
-    return new Map(
-      [...looks].map(([id, l]) => [id, `In look ${l.map((n) => String(n).padStart(2, "0")).join(", ")}`]),
-    );
-  }, [state]);
-
-  // The forecast fills the temperature until the person types their own number.
-  const onWhereWhen = useCallback((v: WhereWhenValue) => setWw(v), []);
-  useEffect(() => {
-    if (tempSource === "forecast" && ww?.forecast) setTemp(String(ww.forecast.temperature_c));
-  }, [ww?.forecast, tempSource]);
-
-  async function submit(e: FormEvent) {
+  // Real links (work without JS, open in new tabs); plain clicks get the curtain transition.
+  const curtain = (href: string) => (e: MouseEvent<HTMLAnchorElement>) => {
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     e.preventDefault();
-    setState({ status: "loading" });
-    const f = ww?.forecast;
-    const usingForecast = tempSource === "forecast" && !!f;
-    const km = ww?.venue && ww.place ? Math.round(distanceKm(ww.place, ww.venue)) : undefined;
-    const request: PlanRequest = {
-      catalogue,
-      occasion,
-      temperature_c: Number(temp),
-      dress_code: dressCode as PlanRequest["dress_code"],
-      dress_code_notes: notes,
-      ...(f && { when: describeTime(f.time) }),
-      ...(ww?.place && { location: ww.place.label }),
-      ...(ww?.venue && { venue: { name: ww.venue.name, kind: ww.venue.kind, distance_km: km } }),
-      weather: usingForecast
-        ? { source: "forecast", feels_like_c: f.feels_like_c, rain_chance_pct: f.rain_chance_pct ?? undefined, conditions: f.conditions }
-        : { source: "typed" },
-    };
-    const res = await callAI("plan", request, {
-      occasion,
-      temperature_c: Number(temp),
-      temperature_source: usingForecast ? `forecast (${ww?.forecastFor})` : "typed by user",
-      dress_code: dressCode,
-      dress_code_notes: notes,
-      venue: ww?.venue ? `${ww.venue.name} (${ww.venue.kind})` : "",
-      when: f ? describeTime(f.time) : "",
-      catalogue_ids: catalogue.map((i) => i.item_id).join(" "),
-    });
-    setLastRequest(request);
-    setState(res.ok ? { status: "done", result: res.data } : { status: "error", message: res.message });
-    revealOnSmallScreens(resultsRef.current);
-  }
+    go(href);
+  };
 
   return (
-    <div className="space-y-10">
-      <div className="grid gap-10 md:grid-cols-[22rem_minmax(0,1fr)] xl:grid-cols-[22rem_minmax(0,1fr)_21rem] xl:gap-8 2xl:grid-cols-[24rem_minmax(0,1fr)_26rem] 2xl:gap-10">
-        {/* ── Brief (stays in view while results scroll) ── */}
-        <section
-          aria-labelledby="plan-h"
-          className="md:sticky md:top-4 md:max-h-[calc(100dvh-2rem)] md:self-start md:overflow-y-auto md:pr-1"
-        >
-          <h1 id="plan-h" className="font-serif text-display font-normal tracking-tight">
-            Plan an outfit
+    <div className="relative flex min-h-dvh flex-col overflow-hidden">
+      {/* masthead */}
+      <header className="flex items-center justify-between gap-4 px-4 pt-6 md:px-8 lg:px-12">
+        <Link href="/" className="group inline-flex items-center gap-2.5" aria-label="Rewear home">
+          <span className="grid size-9 place-items-center rounded-full border border-ink transition-transform duration-200 group-hover:-rotate-6">
+            <Icon name="hanger" className="size-5" />
+          </span>
+          <span className="font-serif text-[1.85rem] leading-none font-medium tracking-tight">Rewear</span>
+        </Link>
+        <span className="care hidden text-graphite sm:inline">Issue 01 · Spring 2026</span>
+        <AboutDialog />
+      </header>
+      <div className="mx-4 mt-5 border-t border-ink md:mx-8 lg:mx-12" />
+
+      {/* hero */}
+      <section className="grid flex-1 items-center gap-12 px-4 py-10 md:px-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:px-12 lg:py-6">
+        <div>
+          <p className="care cover-fade text-graphite" style={{ "--d": "0ms" } as CSSProperties}>
+            Plan outfits from what you own
+          </p>
+          <h1
+            className="cover-fade mt-4 font-serif text-[clamp(3.4rem,8.6vw,8.75rem)] leading-[0.9] font-normal tracking-[-0.02em]"
+            style={{ "--d": "80ms" } as CSSProperties}
+          >
+            Wear what
+            <br />
+            you{" "}
+            <span className="relative inline-block italic">
+              own
+              <svg
+                viewBox="0 0 200 24"
+                preserveAspectRatio="none"
+                className="cover-underline absolute -bottom-2 left-0 h-[0.18em] w-full text-ink"
+                aria-hidden
+              >
+                <path d="M3 15 C 50 4, 110 22, 197 8" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" pathLength="1" />
+              </svg>
+            </span>
+            .
           </h1>
-          <p className="mt-2 text-graphite">From clothes you already own.</p>
+          <p className="cover-fade mt-7 max-w-md text-lg text-graphite" style={{ "--d": "220ms" } as CSSProperties}>
+            AI-assisted outfit planner — suggestions only. You make the final call.
+          </p>
 
-          <form onSubmit={submit} className="mt-8 space-y-4">
-            <fieldset className="panel space-y-5">
-              <legend className="sr-only">The occasion</legend>
-              <p className="panel-title" aria-hidden>
-                <Icon name="calendar" /> The occasion
-              </p>
-              <div>
-                <label htmlFor="occasion" className="label">
-                  What for?
-                </label>
-                <input
-                  id="occasion"
-                  className="field"
-                  required
-                  maxLength={200}
-                  placeholder="uni day, networking event…"
-                  value={occasion}
-                  onChange={(e) => setOccasion(e.target.value)}
-                />
-              </div>
-              <div>
-                <label htmlFor="notes" className="label">
-                  Anything else <span className="opt">(optional)</span>
-                </label>
-                <input
-                  id="notes"
-                  className="field"
-                  maxLength={200}
-                  placeholder="invite says ‘cocktail’"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                />
-              </div>
-            </fieldset>
-
-            <fieldset className="panel">
-              <legend className="sr-only">Where and when</legend>
-              <p className="panel-title" aria-hidden>
-                <Icon name="pin" /> Where &amp; when
-              </p>
-              <WhereWhen onChange={onWhereWhen} />
-            </fieldset>
-
-            <fieldset className="panel space-y-5">
-              <legend className="sr-only">Conditions</legend>
-              <p className="panel-title" aria-hidden>
-                <Icon name="thermo" /> Conditions
-              </p>
-              <div>
-                <label htmlFor="temp" className="label">
-                  Temperature (°C)
-                </label>
-                <input
-                  id="temp"
-                  className="field"
-                  type="number"
-                  inputMode="numeric"
-                  required
-                  min={-30}
-                  max={55}
-                  step={1}
-                  placeholder="18"
-                  value={temp}
-                  aria-describedby="temp-source"
-                  onChange={(e) => {
-                    setTemp(e.target.value);
-                    setTempSource("manual");
-                  }}
-                />
-                <p id="temp-source" className="mt-1.5 text-xs text-graphite">
-                  {tempSource === "manual" ? (
-                    <>
-                      Using your number.{" "}
-                      {ww?.forecast && (
-                        <button type="button" className="btn-quiet" onClick={() => setTempSource("forecast")}>
-                          Use forecast ({ww.forecast.temperature_c}°)
-                        </button>
-                      )}
-                    </>
-                  ) : ww?.forecast ? (
-                    "From the forecast · editable"
-                  ) : (
-                    "Type the expected temperature"
-                  )}
-                </p>
-              </div>
-              <div>
-                <label htmlFor="dress" className="label">
-                  Dress code
-                </label>
-                <select
-                  id="dress"
-                  className="field"
-                  required
-                  value={dressCode}
-                  onChange={(e) => setDressCode(e.target.value)}
-                >
-                  <option value="" disabled>
-                    Choose…
-                  </option>
-                  {DRESS_CODES.map((d) => (
-                    <option key={d} value={d}>
-                      {d[0].toUpperCase() + d.slice(1)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </fieldset>
-
-            <button type="submit" className="btn w-full justify-between" disabled={state.status === "loading"}>
-              {state.status === "loading" ? "Working…" : "Pull outfits"} <Icon name="arrow" />
-            </button>
-          </form>
-        </section>
-
-        {/* ── Results ── */}
-        <section ref={resultsRef} className="scroll-mt-6" aria-labelledby="results-h" aria-live="polite" aria-busy={state.status === "loading"}>
-          <h2 id="results-h" className="sr-only">
-            Suggestions
-          </h2>
-          {state.status === "idle" && <EmptyRail />}
-          {state.status === "loading" && (
-            <p className="breathe border-t border-hairline pt-4 font-serif text-xl italic">
-              Pulling options from your wardrobe…
-            </p>
-          )}
-          {state.status === "error" && (
-            <div className="rise border-t border-ink pt-4" role="alert">
-              <p className="care text-graphite">Something went wrong</p>
-              <p className="mt-1 max-w-prose">{state.message}</p>
-            </div>
-          )}
-          {state.status === "done" && (
-            <div className="space-y-8">
-              {state.result.your_call && <YourCall>{state.result.your_call}</YourCall>}
-              {state.result.message && (
-                <div className="rise border-t border-ink pt-2">
-                  <AiLabel />
-                  <p className="mt-3 max-w-prose font-serif text-xl leading-snug italic">{state.result.message}</p>
-                </div>
-              )}
-              {state.result.outfits.map((o, i) => (
-                <OutfitFlatLay key={i} outfit={o} index={i} catalogue={byId} />
-              ))}
-              {state.result.outfits.length === 0 && !state.result.message && (
-                <p className="text-graphite">No outfits came back for this request.</p>
-              )}
-            </div>
-          )}
-        </section>
-
-        {/* ── Hem: right-hand panel on wide screens, below results otherwise ── */}
-        <aside
-          aria-label="Stylist"
-          className={`md:col-span-2 xl:sticky xl:top-4 xl:col-span-1 xl:max-h-[calc(100dvh-2rem)] xl:self-start xl:overflow-y-auto ${
-            state.status === "done" && lastRequest ? "" : "hidden xl:block"
-          }`}
-        >
-          <div className="rounded-xl border border-hairline bg-card/70 p-4">
-            {state.status === "done" && lastRequest ? (
-              <StylistNotes key={JSON.stringify(state.result)} request={lastRequest} plan={state.result} catalogue={byId} />
-            ) : (
-              <HemIdle loading={state.status === "loading"} />
-            )}
+          <div className="cover-fade mt-9 flex flex-wrap items-center gap-x-6 gap-y-4" style={{ "--d": "340ms" } as CSSProperties}>
+            <a href="/plan" onClick={curtain("/plan")} className="btn group px-7 py-4 text-lg">
+              Plan an outfit
+              <Icon name="arrow" className="size-5 transition-transform duration-200 group-hover:translate-x-1" />
+            </a>
+            <span className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-graphite">
+              <a href="/add" onClick={curtain("/add")} className="btn-quiet">
+                Add items
+              </a>
+              <a href="/buy" onClick={curtain("/buy")} className="btn-quiet">
+                Before you buy
+              </a>
+              <a href="/style" onClick={curtain("/style")} className="btn-quiet">
+                In style
+              </a>
+            </span>
           </div>
-        </aside>
-      </div>
 
-      <WardrobeStrip catalogue={catalogue} marks={marks} />
+          <ol className="cover-fade mt-12 flex flex-wrap gap-x-8 gap-y-3" style={{ "--d": "480ms" } as CSSProperties}>
+            {STEPS.map((s, i) => (
+              <li key={s.text} className="flex items-center gap-3">
+                <span className="grid size-10 place-items-center rounded-full border border-hairline bg-card">
+                  <Icon name={s.icon} className="size-[18px]" />
+                </span>
+                <span className="text-sm">
+                  <span className="font-mono text-xs text-graphite">{String(i + 1).padStart(2, "0")} </span>
+                  {s.text}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </div>
+
+        {/* flat-lay stage */}
+        <div className="relative mx-auto aspect-[5/4] w-full max-w-[660px]" aria-hidden>
+          <span className="absolute inset-[8%] rounded-full bg-panel" />
+          <span className="absolute inset-[18%] rounded-full border border-dashed border-hairline" />
+          {PIECES.map((p) => (
+            <div
+              key={p.notes}
+              className="cover-piece absolute"
+              style={{ left: `${p.left}%`, top: `${p.top}%`, width: `${p.w}%`, "--r": `${p.r}deg`, "--d": `${p.d}ms` } as CSSProperties}
+            >
+              <div className="rounded-lg border border-hairline bg-card p-[8%] shadow-[0_14px_30px_-18px_rgb(28_26_23/0.45)] transition-transform duration-200 hover:-translate-y-1.5">
+                <GarmentArt item={p} className="aspect-[5/6] w-full" />
+              </div>
+            </div>
+          ))}
+          {/* swing tag on a string */}
+          <div className="cover-fade absolute top-[-6%] left-[57%] w-[17%]" style={{ "--d": "1100ms" } as CSSProperties}>
+            <div className="cover-sway flex flex-col items-center">
+              <span className="h-12 w-px bg-ink" />
+              <span className="swing w-full" style={{ ["--cut" as string]: "10px" }}>
+                <span className="swing-body flex flex-col items-center px-2 pt-6 pb-3 text-center">
+                  <span className="swing-hole" />
+                  <span className="care text-[10px] text-graphite">AI suggests</span>
+                  <span className="mt-0.5 font-serif text-sm leading-tight italic sm:text-base">You decide</span>
+                </span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer className="flex flex-wrap items-center justify-between gap-2 px-4 pb-5 text-xs text-graphite md:px-8 lg:px-12">
+        <span>Student prototype · UNSW INFS5706 · Built with AI assistance</span>
+        <span className="font-mono text-[11px]">No account needed · photos never stored on a server</span>
+      </footer>
     </div>
   );
 }

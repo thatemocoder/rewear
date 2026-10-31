@@ -301,6 +301,83 @@
   }
 }
 
+/* ── Fitting-room curtain (page transition) ── */
+.curtain-panel {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50.5%;
+  background:
+    linear-gradient(90deg, rgb(0 0 0 / 0.35), transparent 12%, transparent 88%, rgb(0 0 0 / 0.35)),
+    repeating-linear-gradient(90deg, #1c1a17 0 14px, #2b2723 14px 26px, #1f1c19 26px 40px);
+  box-shadow: 0 0 40px rgb(0 0 0 / 0.35);
+}
+.curtain-left {
+  left: 0;
+  transform-origin: left top;
+}
+.curtain-right {
+  right: 0;
+  transform-origin: right top;
+}
+.curtain[data-phase="closing"] .curtain-left { animation: curtain-in-l 620ms cubic-bezier(0.7, 0, 0.3, 1) both; }
+.curtain[data-phase="closing"] .curtain-right { animation: curtain-in-r 620ms cubic-bezier(0.7, 0, 0.3, 1) both; }
+.curtain[data-phase="opening"] .curtain-left { animation: curtain-out-l 700ms cubic-bezier(0.7, 0, 0.3, 1) both; }
+.curtain[data-phase="opening"] .curtain-right { animation: curtain-out-r 700ms cubic-bezier(0.7, 0, 0.3, 1) both; }
+@keyframes curtain-in-l { from { transform: translateX(-100%) scaleX(0.6); } to { transform: none; } }
+@keyframes curtain-in-r { from { transform: translateX(100%) scaleX(0.6); } to { transform: none; } }
+@keyframes curtain-out-l { from { transform: none; } to { transform: translateX(-100%) scaleX(0.6); } }
+@keyframes curtain-out-r { from { transform: none; } to { transform: translateX(100%) scaleX(0.6); } }
+
+/* ── Cover page ── */
+@keyframes drift-in {
+  from { opacity: 0; transform: translateY(28px) rotate(calc(var(--r, 0deg) - 6deg)) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) rotate(var(--r, 0deg)) scale(1); }
+}
+@keyframes float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -6px; }
+}
+@keyframes sway {
+  0%, 100% { rotate: -4deg; }
+  50% { rotate: 4deg; }
+}
+@keyframes draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+.cover-piece {
+  transform: rotate(var(--r, 0deg));
+  animation: drift-in 900ms var(--ease-quiet) both, float 7s ease-in-out infinite;
+  animation-delay: var(--d, 0ms), calc(var(--d, 0ms) + 900ms);
+}
+.cover-piece:hover {
+  animation-play-state: paused;
+}
+.cover-sway {
+  transform-origin: 50% 0;
+  animation: sway 5s ease-in-out infinite;
+}
+.cover-underline path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: draw 900ms 500ms var(--ease-quiet) forwards;
+}
+.cover-fade {
+  animation: fade-up 700ms var(--ease-quiet) both;
+  animation-delay: var(--d, 0ms);
+}
+@media (prefers-reduced-motion: reduce) {
+  .cover-piece,
+  .cover-sway,
+  .cover-fade { animation: none; }
+  .cover-underline path { animation: none; stroke-dashoffset: 0; }
+}
+
 /* ── Motion: subtle only ── */
 @keyframes rise {
   from {

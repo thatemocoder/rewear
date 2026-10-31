@@ -6,7 +6,7 @@ import { AboutDialog } from "./AboutDialog";
 import { Icon } from "./Icon";
 
 const NAV = [
-  { href: "/", label: "Plan an outfit" },
+  { href: "/plan", label: "Plan an outfit" },
   { href: "/wardrobe", label: "Wardrobe" },
   { href: "/add", label: "Add items" },
   { href: "/buy", label: "Before you buy" },
@@ -40,7 +40,7 @@ export function SiteHeader() {
           className="order-3 col-span-2 -mx-3 flex flex-wrap gap-x-1 border-t border-hairline py-1.5 text-base xl:order-2 xl:col-span-1 xl:mx-0 xl:border-t-0 xl:py-0"
         >
           {NAV.map((n) => {
-            const active = n.href === "/" ? path === "/" : path.startsWith(n.href);
+            const active = path.startsWith(n.href);
             return (
               <Link
                 key={n.href}

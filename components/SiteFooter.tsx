@@ -7,7 +7,7 @@ import { SessionLog } from "./SessionLog";
 
 // The prompts each page uses (the Wardrobe page uses none).
 const FEATURES_FOR_PATH: Record<string, Feature[]> = {
-  "/": ["plan", "stylist"],
+  "/plan": ["plan", "stylist"],
   "/add": ["tag"],
   "/buy": ["buy"],
   "/style": ["trends"],

@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Instrument_Sans, JetBrains_Mono } from "next/font/google";
-import { SiteFooter } from "@/components/SiteFooter";
-import { SiteHeader } from "@/components/SiteHeader";
+import { PageFrame } from "@/components/PageFrame";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -27,11 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:bg-ink focus:px-3 focus:py-2 focus:text-paper">
           Skip to content
         </a>
-        <SiteHeader />
-        <main id="main" className="w-full flex-1 px-4 py-8 md:px-8 lg:px-12 lg:py-10">
-          {children}
-        </main>
-        <SiteFooter />
+        <PageFrame>{children}</PageFrame>
       </body>
     </html>
   );
