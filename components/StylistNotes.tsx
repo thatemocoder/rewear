@@ -4,6 +4,7 @@ import { useRef, useState, type FormEvent } from "react";
 import { callAI } from "@/lib/api";
 import type { CatalogueItem, ChatTurn, Outfit, PlanRequest, PlanResult } from "@/lib/schemas";
 import { YourCall } from "./AiLabel";
+import { HemAvatar } from "./HemAvatar";
 import { OutfitFlatLay } from "./OutfitFlatLay";
 
 interface Turn {
@@ -74,24 +75,34 @@ export function StylistNotes({
 
   return (
     <section aria-labelledby="hem-h" className="border-t border-ink pt-3">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-        <h3 id="hem-h" className="font-serif text-2xl">
-          Talk it through with Hem
-        </h3>
-        <span className="care inline-flex items-center gap-2 font-medium text-oxblood">
-          <span className="size-2 bg-oxblood" aria-hidden />
-          AI stylist
-        </span>
+      <div className="flex items-center gap-4">
+        <HemAvatar size={64} className="-ml-1 drop-shadow-sm" />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+            <h3 id="hem-h" className="font-serif text-2xl">
+              Talk it through with Hem
+            </h3>
+            <span className="care inline-flex items-center gap-2 font-medium text-oxblood">
+              <span className="size-2 bg-oxblood" aria-hidden />
+              AI stylist
+            </span>
+          </div>
+          <p className="mt-0.5 text-sm text-graphite">An AI stylist, not a person. Only uses your wardrobe.</p>
+        </div>
       </div>
-      <p className="mt-1 text-sm text-graphite">An AI stylist, not a person. Only uses your wardrobe.</p>
 
       {turns.length > 0 && (
         <ol className="mt-6 space-y-6" aria-live="polite">
           {turns.map((t, i) => (
             <li key={i} className="rise grid gap-2 sm:grid-cols-[5.5rem_1fr] sm:gap-4">
-              <p className={`care pt-1 ${t.role === "hem" ? "font-medium text-oxblood" : "text-graphite"}`}>
-                {t.role === "hem" ? "Hem · AI" : "You"}
-              </p>
+              {t.role === "hem" ? (
+                <p className="care flex items-center gap-2 font-medium text-oxblood sm:flex-col sm:items-start">
+                  <HemAvatar size={34} decorative />
+                  Hem · AI
+                </p>
+              ) : (
+                <p className="care pt-1 text-graphite">You</p>
+              )}
               <div className="min-w-0 space-y-5">
                 <p className={t.role === "hem" ? "max-w-prose font-serif text-xl leading-snug" : "max-w-prose"}>{t.text}</p>
                 {t.your_call && <YourCall>{t.your_call}</YourCall>}
@@ -110,8 +121,11 @@ export function StylistNotes({
           ))}
           {busy && (
             <li className="grid gap-2 sm:grid-cols-[5.5rem_1fr] sm:gap-4">
-              <p className="care pt-1 font-medium text-oxblood">Hem · AI</p>
-              <p className="breathe font-serif text-xl italic">Looking through the rails…</p>
+              <p className="care flex items-center gap-2 font-medium text-oxblood sm:flex-col sm:items-start">
+                <HemAvatar size={34} decorative className="breathe" />
+                Hem · AI
+              </p>
+              <p className="breathe self-center font-serif text-xl italic">Looking through the rails…</p>
             </li>
           )}
         </ol>
