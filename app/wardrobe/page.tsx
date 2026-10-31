@@ -253,7 +253,7 @@ export default function WardrobePage() {
             <p>Nothing matches.</p>
           </div>
         ) : (
-          <ul className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-5">
+          <ul className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8">
             {shown.map((item) => {
               const here = mounted && isAddedHere(item.item_id);
               const edited = mounted && isEditedHere(item.item_id);

@@ -62,11 +62,11 @@ export function WardrobeStrip({
           This browser isn&apos;t saving data, so items you add will disappear when you leave. Export to keep them.
         </p>
       )}
-      <ul className="-mx-4 mt-4 flex gap-3 overflow-x-auto px-4 pt-1 pb-4 md:mx-0 md:flex-wrap md:overflow-visible md:px-0">
+      <ul className="-mx-4 mt-4 flex snap-x gap-3 overflow-x-auto px-4 pt-1 pb-4 md:-mx-8 md:px-8 lg:-mx-12 lg:px-12">
         {sorted.map((item) => {
           const mark = marks.get(item.item_id);
           return (
-            <li key={item.item_id} className="lift w-40 shrink-0">
+            <li key={item.item_id} className="lift w-40 shrink-0 snap-start">
               <SwingTag
                 item={item}
                 variant={mark ? "picked" : "default"}

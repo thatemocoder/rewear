@@ -138,7 +138,7 @@ export default function BuyPage() {
 
               <h3 className="care mt-6 text-graphite">Already filling this role</h3>
               {state.result.same_role.length ? (
-                <ul className="mt-4 grid grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-3 lg:grid-cols-4">
+                <ul className="mt-4 grid grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6">
                   {state.result.same_role.map((ref, i) => (
                     <li key={`${ref.item_id}-${i}`}>
                       <GarmentCard item={byId.get(ref.item_id)} fallback={ref} photoUrl={photos.get(ref.item_id)} />

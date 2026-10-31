@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { AiLabel, YourCall } from "@/components/AiLabel";
 import { OutfitFlatLay } from "@/components/OutfitFlatLay";
-import { StylistNotes } from "@/components/StylistNotes";
+import { HemIdle, StylistNotes } from "@/components/StylistNotes";
 import { EmptyRail } from "@/components/EmptyRail";
 import { Icon } from "@/components/Icon";
 import { WardrobeStrip } from "@/components/WardrobeStrip";
@@ -91,10 +91,13 @@ export default function PlanPage() {
   }
 
   return (
-    <div className="space-y-16">
-      <div className="grid gap-12 md:grid-cols-[20rem_1fr] lg:gap-16">
-        {/* ── Brief ── */}
-        <section aria-labelledby="plan-h">
+    <div className="space-y-10">
+      <div className="grid gap-10 md:grid-cols-[20rem_minmax(0,1fr)] xl:grid-cols-[18rem_minmax(0,1fr)_22rem] xl:gap-8 2xl:grid-cols-[20rem_minmax(0,1fr)_26rem] 2xl:gap-10">
+        {/* ── Brief (stays in view while results scroll) ── */}
+        <section
+          aria-labelledby="plan-h"
+          className="md:sticky md:top-4 md:max-h-[calc(100dvh-2rem)] md:self-start md:overflow-y-auto md:pr-1"
+        >
           <h1 id="plan-h" className="font-serif text-display font-normal tracking-tight">
             Plan an outfit
           </h1>
@@ -233,7 +236,7 @@ export default function PlanPage() {
             </div>
           )}
           {state.status === "done" && (
-            <div className="space-y-12">
+            <div className="space-y-8">
               {state.result.your_call && <YourCall>{state.result.your_call}</YourCall>}
               {state.result.message && (
                 <div className="rise border-t border-ink pt-2">
@@ -247,12 +250,25 @@ export default function PlanPage() {
               {state.result.outfits.length === 0 && !state.result.message && (
                 <p className="text-graphite">No outfits came back for this request.</p>
               )}
-              {lastRequest && (
-                <StylistNotes key={JSON.stringify(state.result)} request={lastRequest} plan={state.result} catalogue={byId} />
-              )}
             </div>
           )}
         </section>
+
+        {/* ── Hem: right-hand panel on wide screens, below results otherwise ── */}
+        <aside
+          aria-label="Stylist"
+          className={`md:col-span-2 xl:sticky xl:top-4 xl:col-span-1 xl:max-h-[calc(100dvh-2rem)] xl:self-start xl:overflow-y-auto ${
+            state.status === "done" && lastRequest ? "" : "hidden xl:block"
+          }`}
+        >
+          <div className="rounded-xl border border-hairline bg-card/70 p-4">
+            {state.status === "done" && lastRequest ? (
+              <StylistNotes key={JSON.stringify(state.result)} request={lastRequest} plan={state.result} catalogue={byId} />
+            ) : (
+              <HemIdle loading={state.status === "loading"} />
+            )}
+          </div>
+        </aside>
       </div>
 
       <WardrobeStrip catalogue={catalogue} marks={marks} />

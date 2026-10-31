@@ -74,12 +74,12 @@ export function StylistNotes({
   }
 
   return (
-    <section aria-labelledby="hem-h" className="border-t border-ink pt-3">
+    <section aria-labelledby="hem-h" className="@container">
       <div className="flex items-center gap-4">
-        <HemAvatar size={64} className="-ml-1 drop-shadow-sm" />
+        <HemAvatar size={44} className="-ml-1 drop-shadow-sm" />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-            <h3 id="hem-h" className="font-serif text-2xl">
+            <h3 id="hem-h" className="font-serif text-xl leading-tight">
               Talk it through with Hem
             </h3>
             <span className="care inline-flex items-center gap-2 font-medium text-oxblood">
@@ -92,11 +92,11 @@ export function StylistNotes({
       </div>
 
       {turns.length > 0 && (
-        <ol className="mt-6 space-y-6" aria-live="polite">
+        <ol className="mt-5 space-y-5" aria-live="polite">
           {turns.map((t, i) => (
-            <li key={i} className="rise grid gap-2 sm:grid-cols-[5.5rem_1fr] sm:gap-4">
+            <li key={i} className="rise grid gap-2 @md:grid-cols-[5rem_1fr] @md:gap-3">
               {t.role === "hem" ? (
-                <p className="care flex items-center gap-2 font-medium text-oxblood sm:flex-col sm:items-start">
+                <p className="care flex items-center gap-2 font-medium text-oxblood @md:flex-col @md:items-start">
                   <HemAvatar size={34} decorative />
                   Hem · AI
                 </p>
@@ -104,7 +104,7 @@ export function StylistNotes({
                 <p className="care pt-1 text-graphite">You</p>
               )}
               <div className="min-w-0 space-y-5">
-                <p className={t.role === "hem" ? "max-w-prose font-serif text-xl leading-snug" : "max-w-prose"}>{t.text}</p>
+                <p className={t.role === "hem" ? "max-w-prose font-serif text-lg leading-snug @2xl:text-xl" : "max-w-prose"}>{t.text}</p>
                 {t.your_call && <YourCall>{t.your_call}</YourCall>}
                 {t.outfits?.map((o, j) => (
                   <OutfitFlatLay
@@ -114,14 +114,15 @@ export function StylistNotes({
                     catalogue={catalogue}
                     idPrefix={`hem-${i}`}
                     label={`Hem · option ${j + 1}`}
+                    dense
                   />
                 ))}
               </div>
             </li>
           ))}
           {busy && (
-            <li className="grid gap-2 sm:grid-cols-[5.5rem_1fr] sm:gap-4">
-              <p className="care flex items-center gap-2 font-medium text-oxblood sm:flex-col sm:items-start">
+            <li className="grid gap-2 @md:grid-cols-[5rem_1fr] @md:gap-3">
+              <p className="care flex items-center gap-2 font-medium text-oxblood @md:flex-col @md:items-start">
                 <HemAvatar size={34} decorative className="breathe" />
                 Hem · AI
               </p>
@@ -183,5 +184,22 @@ export function StylistNotes({
         </form>
       )}
     </section>
+  );
+}
+
+/** Placeholder for the Hem panel before any outfits exist. */
+export function HemIdle({ loading }: { loading: boolean }) {
+  return (
+    <div className="flex flex-col items-center gap-3 py-6 text-center">
+      <HemAvatar size={64} className={loading ? "breathe" : ""} />
+      <p className="font-serif text-xl">Hem</p>
+      <span className="care inline-flex items-center gap-2 font-medium text-oxblood">
+        <span className="size-2 bg-oxblood" aria-hidden />
+        AI stylist
+      </span>
+      <p className="max-w-[16rem] text-sm text-graphite">
+        {loading ? "Watching the looks come in…" : "Pull some outfits, then ask Hem to tweak them here."}
+      </p>
+    </div>
   );
 }

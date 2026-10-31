@@ -28,7 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Skip to content
         </a>
         <SiteHeader />
-        <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 md:px-8 md:py-14">
+        <main id="main" className="w-full flex-1 px-4 py-8 md:px-8 lg:px-12 lg:py-10">
           {children}
         </main>
         <SiteFooter />

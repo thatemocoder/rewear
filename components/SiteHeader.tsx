@@ -13,25 +13,32 @@ const NAV = [
   { href: "/style", label: "In style" },
 ];
 
-/** Two-tier masthead: wordmark + subtitle + About, then the page nav on its own row. */
+/** Masthead: one row on wide screens (wordmark · nav · About); two rows on narrow ones. */
 export function SiteHeader() {
   const path = usePathname();
   return (
     <header className="border-b border-ink">
-      <div className="mx-auto max-w-6xl px-4 md:px-8">
-        <div className="flex items-center justify-between gap-6 pt-6 pb-4">
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+      <div className="grid grid-cols-[1fr_auto] items-center gap-x-6 px-4 md:px-8 lg:px-12 xl:grid-cols-[auto_1fr_auto] xl:gap-x-10">
+        <div className="order-1 pt-5 pb-3 xl:py-4">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
             <Link href="/" className="group inline-flex items-center gap-2.5">
               <span className="grid size-9 place-items-center rounded-full border border-ink transition-transform duration-200 group-hover:-rotate-6">
                 <Icon name="hanger" className="size-5" />
               </span>
               <span className="font-serif text-[1.85rem] leading-none font-medium tracking-tight">Rewear</span>
             </Link>
-            <p className="text-sm text-graphite">AI-assisted outfit planner — suggestions only. You make the final call.</p>
+            <p className="max-w-[17rem] text-xs leading-snug text-graphite">
+              AI-assisted outfit planner — suggestions only. You make the final call.
+            </p>
           </div>
+        </div>
+        <div className="order-2 xl:order-3">
           <AboutDialog />
         </div>
-        <nav aria-label="Main" className="-mx-3 flex gap-x-1 overflow-x-auto border-t border-hairline py-1.5 text-base">
+        <nav
+          aria-label="Main"
+          className="order-3 col-span-2 -mx-3 flex gap-x-1 overflow-x-auto border-t border-hairline py-1.5 text-base xl:order-2 xl:col-span-1 xl:mx-0 xl:border-t-0 xl:py-0"
+        >
           {NAV.map((n) => {
             const active = n.href === "/" ? path === "/" : path.startsWith(n.href);
             return (
